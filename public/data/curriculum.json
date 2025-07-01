@@ -1,0 +1,357 @@
+{
+  "college": "Georgian National University SEU",
+  "programme": "Doctor of Medicine (MD)",
+  "batch_start_year": 2025,
+  "duration_years": 6,
+  "semesters": {
+    "I": [
+      {
+        "subject": "Body Structure I (Anatomy & Histology & Imaging \u2013 Musculoskeletal)",
+        "ects": 8
+      },
+      {
+        "subject": "Cell Biology (Cell Biology and Biochemistry)",
+        "ects": 6
+      },
+      {
+        "subject": "Introduction to Psychology",
+        "ects": 2
+      },
+      {
+        "subject": "Clinical and Professional Skills I & Medical Ethics",
+        "ects": 4
+      },
+      {
+        "subject": "Georgian/German Language I",
+        "ects": 4
+      },
+      {
+        "subject": "Medical Chemistry/Biophysics (Elective)",
+        "ects": 4
+      },
+      {
+        "subject": "English for Healthcare Prof. I / Information Technologies (IT) (Elective)",
+        "ects": 2
+      }
+    ],
+    "II": [
+      {
+        "subject": "Body Structure II (Anatomy & Histology & Imaging)",
+        "ects": 6
+      },
+      {
+        "subject": "Body Function I (Physiology & Biochemistry)",
+        "ects": 7
+      },
+      {
+        "subject": "Molecular Biology and Genetics",
+        "ects": 5
+      },
+      {
+        "subject": "Clinical and Professional Skills II",
+        "ects": 2
+      },
+      {
+        "subject": "Research Skills I (Reasoning)",
+        "ects": 4
+      },
+      {
+        "subject": "Georgian/German Language II",
+        "ects": 4
+      },
+      {
+        "subject": "English for Healthcare Prof. II / History of Medicine (Elective)",
+        "ects": 2
+      }
+    ],
+    "III": [
+      {
+        "subject": "Body Structure III (Anatomy & Histology & Imaging \u2013 Cardio/Pulmonary/Urinary)",
+        "ects": 6
+      },
+      {
+        "subject": "Neuroscience (Physiology & Biochemistry \u2013 Sensory System)",
+        "ects": 5
+      },
+      {
+        "subject": "Body Function II (Physiology & Biochemistry)",
+        "ects": 8
+      },
+      {
+        "subject": "Clinical and Professional Skills III",
+        "ects": 2
+      },
+      {
+        "subject": "Health Informatics",
+        "ects": 3
+      },
+      {
+        "subject": "Health and Society I",
+        "ects": 4
+      },
+      {
+        "subject": "Philosophy / Sociology (Elective)",
+        "ects": 2
+      }
+    ],
+    "IV": [
+      {
+        "subject": "Body Structure IV (Anatomy & Histology & Imaging)",
+        "ects": 8
+      },
+      {
+        "subject": "Body Function III (Physiology & Biochemistry)",
+        "ects": 8
+      },
+      {
+        "subject": "Clinical and Professional Skills IV / Communication in Medicine",
+        "ects": 4
+      },
+      {
+        "subject": "Immunology",
+        "ects": 6
+      },
+      {
+        "subject": "Health and Society II",
+        "ects": 4
+      }
+    ],
+    "V": [
+      {
+        "subject": "Basics of Clinical Science I (Pathology & Pharmacology)",
+        "ects": 8
+      },
+      {
+        "subject": "Physical Diagnosis I",
+        "ects": 5
+      },
+      {
+        "subject": "Clinical Diagnosis I (Radiology & Lab)",
+        "ects": 4
+      },
+      {
+        "subject": "Clinical and Professional Skills V",
+        "ects": 2
+      },
+      {
+        "subject": "Research Skills II (Methods of Scientific Research)",
+        "ects": 5
+      },
+      {
+        "subject": "Health and Defense I (Microbiology & Pharmacology)",
+        "ects": 4
+      },
+      {
+        "subject": "Nanomedicine / Health Systems and Policies (Elective)",
+        "ects": 2
+      }
+    ],
+    "VI": [
+      {
+        "subject": "Basics of Clinical Science II (Pathology & Pharmacology)",
+        "ects": 8
+      },
+      {
+        "subject": "Physical Diagnosis II",
+        "ects": 5
+      },
+      {
+        "subject": "Clinical Diagnosis II (Radiology & Lab)",
+        "ects": 4
+      },
+      {
+        "subject": "Clinical and Professional Skills VI",
+        "ects": 2
+      },
+      {
+        "subject": "Health and Defense II (Microbiology, Immunology & Pharmacology II)",
+        "ects": 5
+      },
+      {
+        "subject": "Health and Society III",
+        "ects": 4
+      },
+      {
+        "subject": "Cancer Biology / Psychosociology & Health Psychology (Elective)",
+        "ects": 2
+      }
+    ],
+    "VII": [
+      {
+        "subject": "Internal Medicine I (Cardiovascular, Pulmonary, Urinary systems)",
+        "ects": 7
+      },
+      {
+        "subject": "Neurology",
+        "ects": 6
+      },
+      {
+        "subject": "Surgery I (General)",
+        "ects": 5
+      },
+      {
+        "subject": "Clinical and Professional Skills VII",
+        "ects": 2
+      },
+      {
+        "subject": "Research Skills III (Biostatistics & Epidemiology)",
+        "ects": 5
+      },
+      {
+        "subject": "Health and Society IV",
+        "ects": 5
+      }
+    ],
+    "VIII": [
+      {
+        "subject": "Internal Medicine II (Digestive & Endocrine systems, metabolism)",
+        "ects": 6
+      },
+      {
+        "subject": "Dermatology",
+        "ects": 3
+      },
+      {
+        "subject": "Pediatrics I",
+        "ects": 4
+      },
+      {
+        "subject": "Surgery II (ENT, Ophthalmology, Maxillo-Facial Surgery)",
+        "ects": 8
+      },
+      {
+        "subject": "Psychiatry",
+        "ects": 4
+      },
+      {
+        "subject": "Clinical and Professional Skills VIII",
+        "ects": 2
+      },
+      {
+        "subject": "Nutrition / Enzymology (Elective)",
+        "ects": 3
+      }
+    ],
+    "IX": [
+      {
+        "subject": "Internal Medicine III (Rheumatology, Allergy & Clinical Immunology)",
+        "ects": 6
+      },
+      {
+        "subject": "Infectious Diseases I",
+        "ects": 4
+      },
+      {
+        "subject": "Clinical and Professional Skills IX",
+        "ects": 2
+      },
+      {
+        "subject": "Pediatrics II (Neonatology)",
+        "ects": 3
+      },
+      {
+        "subject": "Surgery III (Urology, Traumatology & Orthopedics)",
+        "ects": 6
+      },
+      {
+        "subject": "Obstetrics & Gynecology I (Obstetrics)",
+        "ects": 5
+      },
+      {
+        "subject": "Leadership",
+        "ects": 2
+      },
+      {
+        "subject": "Research Skills IV (Evidence-Based Medicine)",
+        "ects": 2
+      }
+    ],
+    "X": [
+      {
+        "subject": "Internal Medicine IV (Hematology, Genetic diseases, Oncology)",
+        "ects": 5
+      },
+      {
+        "subject": "Infectious Diseases II",
+        "ects": 5
+      },
+      {
+        "subject": "Obstetrics & Gynecology II (Gynecology)",
+        "ects": 5
+      },
+      {
+        "subject": "Clinical and Professional Skills X",
+        "ects": 2
+      },
+      {
+        "subject": "Forensic Medicine",
+        "ects": 4
+      },
+      {
+        "subject": "Health and Society V",
+        "ects": 5
+      },
+      {
+        "subject": "Pediatric Neurology / Child Surgery (Elective)",
+        "ects": 4
+      }
+    ],
+    "XI": [
+      {
+        "subject": "Family Medicine I",
+        "ects": 3
+      },
+      {
+        "subject": "Surgery IV (Neurosurgery, Anesthesiology & Intensive Care)",
+        "ects": 6
+      },
+      {
+        "subject": "Geriatrics & Palliative Care",
+        "ects": 4
+      },
+      {
+        "subject": "Rehabilitation & Sports Medicine",
+        "ects": 4
+      },
+      {
+        "subject": "Clinical and Professional Skills XI",
+        "ects": 4
+      },
+      {
+        "subject": "Research Skills V (Methods of Scientific Research)",
+        "ects": 5
+      },
+      {
+        "subject": "Sexual Medicine / Pharmacovigilance (Elective)",
+        "ects": 4
+      }
+    ],
+    "XII": [
+      {
+        "subject": "Internal Medicine V (Clinical Pharmacology)",
+        "ects": 6
+      },
+      {
+        "subject": "Family Medicine II",
+        "ects": 8
+      },
+      {
+        "subject": "Surgery V",
+        "ects": 5
+      },
+      {
+        "subject": "Emergency Medicine",
+        "ects": 5
+      },
+      {
+        "subject": "Clinical and Professional Skills XII",
+        "ects": 4
+      },
+      {
+        "subject": "Personalized Medicine",
+        "ects": 2
+      }
+    ]
+  },
+  "total_ects": 360
+}
