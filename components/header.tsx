@@ -35,7 +35,7 @@ export default function Header() {
     { name: "Track & Plan", href: "/track-plan" },
     { name: "Learn Space", href: "/learn-space" },
     { name: "Curriculum Hub", href: "/curriculum-hub" },
-    { name: "Mind Boost", href: "/mind-boost" },
+    { name: "Language", href: "/mind-boost" },
     { name: "Next Step", href: "/next-step" },
   ]
 

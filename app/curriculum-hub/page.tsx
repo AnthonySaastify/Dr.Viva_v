@@ -10,7 +10,6 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ArrowLeft, Search, Download, Calendar, BookOpen, Clock } from "lucide-react"
 import Link from "next/link"
-import Header from "@/components/header"
 import Footer from "@/components/footer"
 import LoadingSpinner from "@/components/loading-spinner"
 
@@ -125,8 +124,6 @@ export default function CurriculumHub() {
 
   return (
     <main className="min-h-screen bg-background pt-20">
-      <Header />
-
       <div className="container mx-auto px-4 py-8">
         <div className="mb-6">
           <Link href="/">

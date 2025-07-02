@@ -8,7 +8,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ArrowLeft, Globe, BookOpen, Calendar, Clock, CheckCircle2, FileText, ExternalLink } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
-import Header from "@/components/header"
 
 export default function NextStep() {
   const [activeTab, setActiveTab] = useState("usmle")
@@ -160,8 +159,6 @@ export default function NextStep() {
 
   return (
     <main className="min-h-screen bg-background pt-20">
-      <Header />
-
       <div className="container mx-auto px-4 py-8">
         <div className="mb-6">
           <Link href="/">

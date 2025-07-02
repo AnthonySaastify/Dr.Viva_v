@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
 import { useEffect } from "react"
 import GapiLoader from "@/components/GapiLoader"
+import Header from "@/components/header"
 
 export const metadata: Metadata = {
   title: "Dr. AIVA - Medical Education Platform",
@@ -25,6 +26,7 @@ export default function RootLayout({
         <GapiLoader />
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <AuthProvider>
+            <Header />
             {children}
             <Toaster />
           </AuthProvider>

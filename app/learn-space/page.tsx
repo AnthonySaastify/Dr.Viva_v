@@ -11,7 +11,6 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { ArrowLeft, Search, Filter, BookOpen, Video, FileText, Star, BookMarked, Lock } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
-import Header from "@/components/header"
 import Footer from "@/components/footer"
 import LoadingSpinner from "@/components/loading-spinner"
 import googleDriveService, { SUBJECT_FOLDER_MAP, DriveFile } from "@/services/googleDriveService"
@@ -192,8 +191,6 @@ export default function LearnSpace() {
 
   return (
     <main className="min-h-screen bg-background pt-20">
-      <Header />
-
       <div className="container mx-auto px-4 py-8">
         <div className="mb-6">
           <Link href="/">

@@ -9,7 +9,6 @@ import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
 import { Calendar, Clock, ArrowLeft, Plus, CalendarIcon, RefreshCw } from "lucide-react"
 import Link from "next/link"
-import Header from "@/components/header"
 import Footer from "@/components/footer"
 import {
   AlertDialog,
@@ -271,410 +270,407 @@ export default function TrackPlan() {
   const getSessionIndexFromModalKey = (key: string) => Number(key.split("__")[1])
 
   return (
-    <>
-      <Header />
-      <main className="min-h-screen bg-background pt-16">
-        <div className="container mx-auto px-4 py-8">
-          <div className="mb-6">
-            <Link href="/">
-              <Button variant="outline" size="sm" className="mb-4">
-                <ArrowLeft className="h-4 w-4 mr-2" /> Back to Home
-              </Button>
-            </Link>
+    <main className="min-h-screen bg-background pt-16">
+      <div className="container mx-auto px-4 py-8">
+        <div className="mb-6">
+          <Link href="/">
+            <Button variant="outline" size="sm" className="mb-4">
+              <ArrowLeft className="h-4 w-4 mr-2" /> Back to Home
+            </Button>
+          </Link>
 
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-              <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">Track & Plan</h1>
-              <p className="text-lg text-muted-foreground mb-6">
-                Monitor your progress and plan your study schedule effectively
-              </p>
-            </motion.div>
-          </div>
-
-          <Tabs defaultValue="progress" value={activeTab} onValueChange={setActiveTab} className="mb-8">
-            <TabsList className="mb-6">
-              <TabsTrigger value="progress">Progress Tracking</TabsTrigger>
-              <TabsTrigger value="tasks">Tasks Database</TabsTrigger>
-              <TabsTrigger value="schedule">Study Schedule</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="progress">
-              <motion.div
-                variants={containerVariants}
-                initial="hidden"
-                animate="visible"
-                className="grid grid-cols-1 md:grid-cols-2 gap-6"
-              >
-                {subjects.map((subject, index) => (
-                  <motion.div key={index} variants={itemVariants}>
-                    <Card>
-                      <CardHeader className="pb-2">
-                        <div className="flex justify-between items-center">
-                          <CardTitle>{subject.name}</CardTitle>
-                          <Badge
-                            className={`${
-                              subject.progress >= 75
-                                ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
-                                : subject.progress >= 50
-                                  ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
-                                  : "bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300"
-                            }`}
-                          >
-                            {subject.progress}% Complete
-                          </Badge>
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        <Progress
-                          value={subject.progress}
-                          className="h-2 mb-4 cursor-pointer"
-                          onClick={() => handleProgressClick(subject.name)}
-                        />
-                        <div className="grid grid-cols-2 gap-4 text-sm">
-                          <div className="flex items-center gap-2">
-                            <Clock className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-muted-foreground">
-                              {subject.completedHours}/{subject.totalHours} hours
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2 cursor-pointer">
-                            <Calendar className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-muted-foreground">Next: {subject.nextSession}</span>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </motion.div>
-                ))}
-
-                <motion.div variants={itemVariants} className="md:col-span-2">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Overall Progress</CardTitle>
-                      <CardDescription>Your semester progress across all subjects</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-4">
-                        <div>
-                          <div className="flex justify-between mb-1">
-                            <span className="text-sm font-medium">Semester Completion</span>
-                            <span className="text-sm font-medium">67%</span>
-                          </div>
-                          <Progress
-                            value={67}
-                            className="h-2 cursor-pointer"
-                            onClick={() => handleProgressClick("Semester Completion")}
-                          />
-                        </div>
-                        <div>
-                          <div className="flex justify-between mb-1">
-                            <span className="text-sm font-medium">Study Hours Target</span>
-                            <span className="text-sm font-medium">222/340 hours</span>
-                          </div>
-                          <Progress
-                            value={65}
-                            className="h-2 cursor-pointer"
-                            onClick={() => handleProgressClick("Study Hours Target")}
-                          />
-                        </div>
-                        <div>
-                          <div className="flex justify-between mb-1">
-                            <span className="text-sm font-medium">Assignment Completion</span>
-                            <span className="text-sm font-medium">85%</span>
-                          </div>
-                          <Progress
-                            value={85}
-                            className="h-2 cursor-pointer"
-                            onClick={() => handleProgressClick("Assignment Completion")}
-                          />
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              </motion.div>
-            </TabsContent>
-
-            <TabsContent value="tasks">
-              <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-6">
-                <motion.div variants={itemVariants} className="flex justify-between items-center">
-                  <div>
-                    <h2 className="text-2xl font-bold text-foreground">Tasks Database</h2>
-                    <p className="text-sm text-muted-foreground">
-                      Connected to Google Sheets (ID: 1R7U3iKwTgxLONcliIXqZR45LV8S_aHf_J8Mqam9eWYo)
-                    </p>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button variant="outline" onClick={loadTasks} disabled={isLoadingTasks}>
-                      <RefreshCw className={`h-4 w-4 mr-2 ${isLoadingTasks ? "animate-spin" : ""}`} />
-                      Refresh
-                    </Button>
-                    <Button
-                      className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800"
-                      onClick={handleOpenTaskModal}
-                    >
-                      <Plus className="h-4 w-4 mr-2" /> Add Task
-                    </Button>
-                  </div>
-                </motion.div>
-
-                <motion.div variants={itemVariants}>
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>All Tasks</CardTitle>
-                      <CardDescription>Tasks stored in Google Sheets backend</CardDescription>
-                    </CardHeader>
-                    <CardContent className="p-0">
-                      {isLoadingTasks ? (
-                        <div className="p-8 text-center">
-                          <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4" />
-                          <p>Loading tasks from Google Sheets...</p>
-                        </div>
-                      ) : sheetTasks.length === 0 ? (
-                        <div className="p-8 text-center text-muted-foreground">
-                          <p>No tasks found. Create your first task!</p>
-                        </div>
-                      ) : (
-                        <div className="divide-y divide-border">
-                          {sheetTasks.map((task) => (
-                            <div key={task.id} className="p-4">
-                              <div className="flex items-start justify-between">
-                                <div className="flex-1">
-                                  <div className="flex items-center gap-3 mb-2">
-                                    <h3 className="font-medium text-foreground">{task.title}</h3>
-                                    <Badge className={getStatusColor(task.status)}>{task.status}</Badge>
-                                  </div>
-                                  <p className="text-sm text-muted-foreground mb-2">{task.description}</p>
-                                  <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                                    <span>📅 Created: {task.timestamp}</span>
-                                    {task.scheduledDate && <span>🗓️ Scheduled: {task.scheduledDate}</span>}
-                                  </div>
-                                </div>
-                                <div className="flex gap-2 ml-4">
-                                  {task.status !== "Done" && (
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={() => handleTaskStatusUpdate(task.id, "Done")}
-                                    >
-                                      Mark Done
-                                    </Button>
-                                  )}
-                                  {task.status === "Pending" && (
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={() => handleTaskStatusUpdate(task.id, "In Progress")}
-                                    >
-                                      Start
-                                    </Button>
-                                  )}
-                                  {task.status === "Done" && (
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={() => handleTaskStatusUpdate(task.id, "Pending")}
-                                    >
-                                      Reopen
-                                    </Button>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                </motion.div>
-
-                <motion.div variants={itemVariants}>
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Task Summary</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="bg-amber-50 dark:bg-amber-950 p-4 rounded-lg">
-                          <h3 className="font-medium text-foreground mb-1">Pending</h3>
-                          <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">
-                            {sheetTasks.filter((task) => task.status === "Pending").length}
-                          </p>
-                        </div>
-                        <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg">
-                          <h3 className="font-medium text-foreground mb-1">In Progress</h3>
-                          <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                            {sheetTasks.filter((task) => task.status === "In Progress").length}
-                          </p>
-                        </div>
-                        <div className="bg-green-50 dark:bg-green-950 p-4 rounded-lg">
-                          <h3 className="font-medium text-foreground mb-1">Done</h3>
-                          <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-                            {sheetTasks.filter((task) => task.status === "Done").length}
-                          </p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              </motion.div>
-            </TabsContent>
-
-            <TabsContent value="schedule">
-              <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-6">
-                <motion.div variants={itemVariants} className="flex justify-between items-center">
-                  <h2 className="text-2xl font-bold text-foreground">Weekly Study Schedule</h2>
-                  <Button
-                    className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800"
-                    onClick={handleOpenSessionModal}
-                  >
-                    <Plus className="h-4 w-4 mr-2" /> Add Study Session
-                  </Button>
-                </motion.div>
-
-                <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-5 gap-4">
-                  {studySchedule.map((day, dayIndex) => (
-                    <div key={dayIndex} className="flex flex-col h-full">
-                      <h2 className="text-2xl font-bold text-center mb-4">{day.day}</h2>
-                      {day.sessions.map((session, sessionIndex) => {
-                        const modalKey = `${day.day}__${sessionIndex}__${session.subject}`
-                        const file = sessionFiles[modalKey]
-                        return (
-                          <div
-                            key={sessionIndex}
-                            className="bg-blue-900/80 rounded-lg p-4 mb-4 shadow-md"
-                          >
-                            <div className="font-semibold text-base text-white">{session.subject}</div>
-                            <div className="text-sm text-blue-100 mt-1">{session.time}</div>
-                            <button
-                              className="flex items-center gap-2 mt-3 text-xs text-blue-300 hover:text-blue-400 underline"
-                              onClick={() => handleOpenDriveModal(session.subject, day.day, sessionIndex)}
-                              title="Click to view DataBase resources"
-                              style={{ padding: 0, background: 'none', border: 'none', cursor: 'pointer' }}
-                            >
-                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24"><path fill="currentColor" d="M6.5 6.5v-2A2.5 2.5 0 0 1 9 2h6a2.5 2.5 0 0 1 2.5 2.5v2a1 1 0 1 1-2 0v-2A.5.5 0 0 0 15 4H9a.5.5 0 0 0-.5.5v2a1 1 0 1 1-2 0ZM4 8a1 1 0 0 1 1 1v9.5A2.5 2.5 0 0 0 7.5 21h9a2.5 2.5 0 0 0 2.5-2.5V9a1 1 0 1 1 2 0v9.5A4.5 4.5 0 0 1 16.5 23h-9A4.5 4.5 0 0 1 3 18.5V9a1 1 0 0 1 1-1Zm4.293 4.707a1 1 0 0 1 1.414 0L11 15.586V10a1 1 0 1 1 2 0v5.586l1.293-1.293a1 1 0 1 1 1.414 1.414l-3 3a1 1 0 0 1-1.414 0l-3-3a1 1 0 0 1 0-1.414Z"/></svg>
-                              <span>Click to view DataBase resources</span>
-                            </button>
-                            {file && (
-                              <a
-                                href={`https://drive.google.com/file/d/${file.id}/view`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="block mt-2 text-blue-400 underline text-xs"
-                              >
-                                {file.name}
-                              </a>
-                            )}
-                          </div>
-                        )
-                      })}
-                    </div>
-                  ))}
-                </motion.div>
-
-                <motion.div variants={itemVariants}>
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Study Time Distribution</CardTitle>
-                      <CardDescription>Hours allocated per subject this week</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-4">
-                        <div>
-                          <div className="flex justify-between mb-1">
-                            <span className="text-sm font-medium">Anatomy & Histology</span>
-                            <span className="text-sm font-medium">8 hours</span>
-                          </div>
-                          <Progress
-                            value={40}
-                            className="h-2 cursor-pointer"
-                            onClick={() => handleProgressClick("Anatomy & Histology")}
-                          />
-                        </div>
-                        <div>
-                          <div className="flex justify-between mb-1">
-                            <span className="text-sm font-medium">Physiology</span>
-                            <span className="text-sm font-medium">6 hours</span>
-                          </div>
-                          <Progress
-                            value={30}
-                            className="h-2 cursor-pointer"
-                            onClick={() => handleProgressClick("Physiology")}
-                          />
-                        </div>
-                        <div>
-                          <div className="flex justify-between mb-1">
-                            <span className="text-sm font-medium">Biochemistry</span>
-                            <span className="text-sm font-medium">4 hours</span>
-                          </div>
-                          <Progress
-                            value={20}
-                            className="h-2 cursor-pointer"
-                            onClick={() => handleProgressClick("Biochemistry")}
-                          />
-                        </div>
-                        <div>
-                          <div className="flex justify-between mb-1">
-                            <span className="text-sm font-medium">Medical Ethics</span>
-                            <span className="text-sm font-medium">2 hours</span>
-                          </div>
-                          <Progress
-                            value={10}
-                            className="h-2 cursor-pointer"
-                            onClick={() => handleProgressClick("Medical Ethics")}
-                          />
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              </motion.div>
-            </TabsContent>
-          </Tabs>
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+            <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">Track & Plan</h1>
+            <p className="text-lg text-muted-foreground mb-6">
+              Monitor your progress and plan your study schedule effectively
+            </p>
+          </motion.div>
         </div>
 
-        <Footer />
+        <Tabs defaultValue="progress" value={activeTab} onValueChange={setActiveTab} className="mb-8">
+          <TabsList className="mb-6">
+            <TabsTrigger value="progress">Progress Tracking</TabsTrigger>
+            <TabsTrigger value="tasks">Tasks Database</TabsTrigger>
+            <TabsTrigger value="schedule">Study Schedule</TabsTrigger>
+          </TabsList>
 
-        {/* Task Creation Modal */}
-        <AlertDialog open={isTaskModalOpen} onOpenChange={setIsTaskModalOpen}>
-          <AlertDialogContent className="max-w-2xl">
-            <AlertDialogHeader>
-              <AlertDialogTitle>Add New Task</AlertDialogTitle>
-              <AlertDialogDescription>
-                Create a new task that will be saved to your Google Sheets database.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <TaskForm onAddTask={handleAddTask} onClose={handleCloseTaskModal} />
-          </AlertDialogContent>
-        </AlertDialog>
+          <TabsContent value="progress">
+            <motion.div
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+              className="grid grid-cols-1 md:grid-cols-2 gap-6"
+            >
+              {subjects.map((subject, index) => (
+                <motion.div key={index} variants={itemVariants}>
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <div className="flex justify-between items-center">
+                        <CardTitle>{subject.name}</CardTitle>
+                        <Badge
+                          className={`${
+                            subject.progress >= 75
+                              ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
+                              : subject.progress >= 50
+                                ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
+                                : "bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300"
+                          }`}
+                        >
+                          {subject.progress}% Complete
+                        </Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <Progress
+                        value={subject.progress}
+                        className="h-2 mb-4 cursor-pointer"
+                        onClick={() => handleProgressClick(subject.name)}
+                      />
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div className="flex items-center gap-2">
+                          <Clock className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-muted-foreground">
+                            {subject.completedHours}/{subject.totalHours} hours
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 cursor-pointer">
+                          <Calendar className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-muted-foreground">Next: {subject.nextSession}</span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
 
-        {/* Study Session Modal */}
-        <AlertDialog open={isSessionModalOpen} onOpenChange={setIsSessionModalOpen}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Add Study Session</AlertDialogTitle>
-              <AlertDialogDescription>Schedule a new study session to stay organized.</AlertDialogDescription>
-            </AlertDialogHeader>
-            <SessionForm
-              onAddSession={handleAddSession}
-              onClose={handleCloseSessionModal}
-              setSelectedDate={setSelectedDate}
-              selectedDate={selectedDate}
-            />
-          </AlertDialogContent>
-        </AlertDialog>
+              <motion.div variants={itemVariants} className="md:col-span-2">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Overall Progress</CardTitle>
+                    <CardDescription>Your semester progress across all subjects</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div>
+                        <div className="flex justify-between mb-1">
+                          <span className="text-sm font-medium">Semester Completion</span>
+                          <span className="text-sm font-medium">67%</span>
+                        </div>
+                        <Progress
+                          value={67}
+                          className="h-2 cursor-pointer"
+                          onClick={() => handleProgressClick("Semester Completion")}
+                        />
+                      </div>
+                      <div>
+                        <div className="flex justify-between mb-1">
+                          <span className="text-sm font-medium">Study Hours Target</span>
+                          <span className="text-sm font-medium">222/340 hours</span>
+                        </div>
+                        <Progress
+                          value={65}
+                          className="h-2 cursor-pointer"
+                          onClick={() => handleProgressClick("Study Hours Target")}
+                        />
+                      </div>
+                      <div>
+                        <div className="flex justify-between mb-1">
+                          <span className="text-sm font-medium">Assignment Completion</span>
+                          <span className="text-sm font-medium">85%</span>
+                        </div>
+                        <Progress
+                          value={85}
+                          className="h-2 cursor-pointer"
+                          onClick={() => handleProgressClick("Assignment Completion")}
+                        />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            </motion.div>
+          </TabsContent>
 
-        {/* DataBase Modal Integration */}
-        <GoogleDriveModal
-          open={isDriveModalOpen}
-          onClose={() => {
-            setIsDriveModalOpen(false)
-            setDriveModalSubject(null)
-          }}
-          subject={driveModalSubject ? getSubjectFromModalKey(driveModalSubject) : ''}
-          onFileSelect={handleDriveFileSelect}
-        />
-      </main>
-    </>
+          <TabsContent value="tasks">
+            <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-6">
+              <motion.div variants={itemVariants} className="flex justify-between items-center">
+                <div>
+                  <h2 className="text-2xl font-bold text-foreground">Tasks Database</h2>
+                  <p className="text-sm text-muted-foreground">
+                    Connected to Google Sheets (ID: 1R7U3iKwTgxLONcliIXqZR45LV8S_aHf_J8Mqam9eWYo)
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={loadTasks} disabled={isLoadingTasks}>
+                    <RefreshCw className={`h-4 w-4 mr-2 ${isLoadingTasks ? "animate-spin" : ""}`} />
+                    Refresh
+                  </Button>
+                  <Button
+                    className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800"
+                    onClick={handleOpenTaskModal}
+                  >
+                    <Plus className="h-4 w-4 mr-2" /> Add Task
+                  </Button>
+                </div>
+              </motion.div>
+
+              <motion.div variants={itemVariants}>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>All Tasks</CardTitle>
+                    <CardDescription>Tasks stored in Google Sheets backend</CardDescription>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    {isLoadingTasks ? (
+                      <div className="p-8 text-center">
+                        <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4" />
+                        <p>Loading tasks from Google Sheets...</p>
+                      </div>
+                    ) : sheetTasks.length === 0 ? (
+                      <div className="p-8 text-center text-muted-foreground">
+                        <p>No tasks found. Create your first task!</p>
+                      </div>
+                    ) : (
+                      <div className="divide-y divide-border">
+                        {sheetTasks.map((task) => (
+                          <div key={task.id} className="p-4">
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-3 mb-2">
+                                  <h3 className="font-medium text-foreground">{task.title}</h3>
+                                  <Badge className={getStatusColor(task.status)}>{task.status}</Badge>
+                                </div>
+                                <p className="text-sm text-muted-foreground mb-2">{task.description}</p>
+                                <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                                  <span>📅 Created: {task.timestamp}</span>
+                                  {task.scheduledDate && <span>🗓️ Scheduled: {task.scheduledDate}</span>}
+                                </div>
+                              </div>
+                              <div className="flex gap-2 ml-4">
+                                {task.status !== "Done" && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleTaskStatusUpdate(task.id, "Done")}
+                                  >
+                                    Mark Done
+                                  </Button>
+                                )}
+                                {task.status === "Pending" && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleTaskStatusUpdate(task.id, "In Progress")}
+                                  >
+                                    Start
+                                  </Button>
+                                )}
+                                {task.status === "Done" && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleTaskStatusUpdate(task.id, "Pending")}
+                                  >
+                                    Reopen
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </motion.div>
+
+              <motion.div variants={itemVariants}>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Task Summary</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="bg-amber-50 dark:bg-amber-950 p-4 rounded-lg">
+                        <h3 className="font-medium text-foreground mb-1">Pending</h3>
+                        <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">
+                          {sheetTasks.filter((task) => task.status === "Pending").length}
+                        </p>
+                      </div>
+                      <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg">
+                        <h3 className="font-medium text-foreground mb-1">In Progress</h3>
+                        <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                          {sheetTasks.filter((task) => task.status === "In Progress").length}
+                        </p>
+                      </div>
+                      <div className="bg-green-50 dark:bg-green-950 p-4 rounded-lg">
+                        <h3 className="font-medium text-foreground mb-1">Done</h3>
+                        <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+                          {sheetTasks.filter((task) => task.status === "Done").length}
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            </motion.div>
+          </TabsContent>
+
+          <TabsContent value="schedule">
+            <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-6">
+              <motion.div variants={itemVariants} className="flex justify-between items-center">
+                <h2 className="text-2xl font-bold text-foreground">Weekly Study Schedule</h2>
+                <Button
+                  className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800"
+                  onClick={handleOpenSessionModal}
+                >
+                  <Plus className="h-4 w-4 mr-2" /> Add Study Session
+                </Button>
+              </motion.div>
+
+              <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                {studySchedule.map((day, dayIndex) => (
+                  <div key={dayIndex} className="flex flex-col h-full">
+                    <h2 className="text-2xl font-bold text-center mb-4">{day.day}</h2>
+                    {day.sessions.map((session, sessionIndex) => {
+                      const modalKey = `${day.day}__${sessionIndex}__${session.subject}`
+                      const file = sessionFiles[modalKey]
+                      return (
+                        <div
+                          key={sessionIndex}
+                          className="bg-blue-900/80 rounded-lg p-4 mb-4 shadow-md"
+                        >
+                          <div className="font-semibold text-base text-white">{session.subject}</div>
+                          <div className="text-sm text-blue-100 mt-1">{session.time}</div>
+                          <button
+                            className="flex items-center gap-2 mt-3 text-xs text-blue-300 hover:text-blue-400 underline"
+                            onClick={() => handleOpenDriveModal(session.subject, day.day, sessionIndex)}
+                            title="Click to view DataBase resources"
+                            style={{ padding: 0, background: 'none', border: 'none', cursor: 'pointer' }}
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24"><path fill="currentColor" d="M6.5 6.5v-2A2.5 2.5 0 0 1 9 2h6a2.5 2.5 0 0 1 2.5 2.5v2a1 1 0 1 1-2 0v-2A.5.5 0 0 0 15 4H9a.5.5 0 0 0-.5.5v2a1 1 0 1 1-2 0ZM4 8a1 1 0 0 1 1 1v9.5A2.5 2.5 0 0 0 7.5 21h9a2.5 2.5 0 0 0 2.5-2.5V9a1 1 0 1 1 2 0v9.5A4.5 4.5 0 0 1 16.5 23h-9A4.5 4.5 0 0 1 3 18.5V9a1 1 0 0 1 1-1Zm4.293 4.707a1 1 0 0 1 1.414 0L11 15.586V10a1 1 0 1 1 2 0v5.586l1.293-1.293a1 1 0 1 1 1.414 1.414l-3 3a1 1 0 0 1-1.414 0l-3-3a1 1 0 0 1 0-1.414Z"/></svg>
+                            <span>Click to view DataBase resources</span>
+                          </button>
+                          {file && (
+                            <a
+                              href={`https://drive.google.com/file/d/${file.id}/view`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="block mt-2 text-blue-400 underline text-xs"
+                            >
+                              {file.name}
+                            </a>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                ))}
+              </motion.div>
+
+              <motion.div variants={itemVariants}>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Study Time Distribution</CardTitle>
+                    <CardDescription>Hours allocated per subject this week</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div>
+                        <div className="flex justify-between mb-1">
+                          <span className="text-sm font-medium">Anatomy & Histology</span>
+                          <span className="text-sm font-medium">8 hours</span>
+                        </div>
+                        <Progress
+                          value={40}
+                          className="h-2 cursor-pointer"
+                          onClick={() => handleProgressClick("Anatomy & Histology")}
+                        />
+                      </div>
+                      <div>
+                        <div className="flex justify-between mb-1">
+                          <span className="text-sm font-medium">Physiology</span>
+                          <span className="text-sm font-medium">6 hours</span>
+                        </div>
+                        <Progress
+                          value={30}
+                          className="h-2 cursor-pointer"
+                          onClick={() => handleProgressClick("Physiology")}
+                        />
+                      </div>
+                      <div>
+                        <div className="flex justify-between mb-1">
+                          <span className="text-sm font-medium">Biochemistry</span>
+                          <span className="text-sm font-medium">4 hours</span>
+                        </div>
+                        <Progress
+                          value={20}
+                          className="h-2 cursor-pointer"
+                          onClick={() => handleProgressClick("Biochemistry")}
+                        />
+                      </div>
+                      <div>
+                        <div className="flex justify-between mb-1">
+                          <span className="text-sm font-medium">Medical Ethics</span>
+                          <span className="text-sm font-medium">2 hours</span>
+                        </div>
+                        <Progress
+                          value={10}
+                          className="h-2 cursor-pointer"
+                          onClick={() => handleProgressClick("Medical Ethics")}
+                        />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            </motion.div>
+          </TabsContent>
+        </Tabs>
+      </div>
+
+      <Footer />
+
+      {/* Task Creation Modal */}
+      <AlertDialog open={isTaskModalOpen} onOpenChange={setIsTaskModalOpen}>
+        <AlertDialogContent className="max-w-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Add New Task</AlertDialogTitle>
+            <AlertDialogDescription>
+              Create a new task that will be saved to your Google Sheets database.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <TaskForm onAddTask={handleAddTask} onClose={handleCloseTaskModal} />
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Study Session Modal */}
+      <AlertDialog open={isSessionModalOpen} onOpenChange={setIsSessionModalOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Add Study Session</AlertDialogTitle>
+            <AlertDialogDescription>Schedule a new study session to stay organized.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <SessionForm
+            onAddSession={handleAddSession}
+            onClose={handleCloseSessionModal}
+            setSelectedDate={setSelectedDate}
+            selectedDate={selectedDate}
+          />
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* DataBase Modal Integration */}
+      <GoogleDriveModal
+        open={isDriveModalOpen}
+        onClose={() => {
+          setIsDriveModalOpen(false)
+          setDriveModalSubject(null)
+        }}
+        subject={driveModalSubject ? getSubjectFromModalKey(driveModalSubject) : ''}
+        onFileSelect={handleDriveFileSelect}
+      />
+    </main>
   )
 }
 
