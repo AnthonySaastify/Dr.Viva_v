@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -41,6 +41,8 @@ export default function TrackPlan() {
   const [isDriveModalOpen, setIsDriveModalOpen] = useState(false)
   const [driveModalSubject, setDriveModalSubject] = useState<string | null>(null)
   const [sessionFiles, setSessionFiles] = useState<{ [key: string]: DriveFile }>({})
+  const [selectedSessions, setSelectedSessions] = useState<{ day: string; sessionIndex: number }[]>([])
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false)
 
   const { toast } = useToast()
 
@@ -95,41 +97,54 @@ export default function TrackPlan() {
     },
   ])
 
-  // Mock data for study schedule
+  // Updated study schedule with instructor names
   const [studySchedule, setStudySchedule] = useState([
     {
       day: "Monday",
       sessions: [
-        { time: "9:00 AM - 11:00 AM", subject: "Anatomy & Histology" },
-        { time: "1:00 PM - 3:00 PM", subject: "Physiology" },
+        { time: "9:00 - 11:00", subject: "Cell biology seminar", instructor: "Elene" },
+        { time: "11:00 - 12:00", subject: "Cell biology lecture", instructor: "Elene" },
+        { time: "14:00 - 15:00", subject: "Medical Ethics lecture", instructor: "Natia" },
       ],
     },
     {
       day: "Tuesday",
       sessions: [
-        { time: "10:00 AM - 12:00 PM", subject: "Biochemistry" },
-        { time: "2:00 PM - 4:00 PM", subject: "Medical Ethics" },
+        { time: "11:00 - 12:00", subject: "Histology Lecture", instructor: "Irine" },
       ],
     },
     {
       day: "Wednesday",
       sessions: [
-        { time: "9:00 AM - 11:00 AM", subject: "Physiology" },
-        { time: "1:00 PM - 3:00 PM", subject: "Anatomy & Histology" },
+        { time: "13:00 - 14:00", subject: "Medical Ethics Seminar", instructor: "Natia" },
+        { time: "14:00 - 15:00", subject: "Introduction to psychology Lecture", instructor: "Natia" },
+        { time: "17:00 - 19:00", subject: "Georgian language Lecture", instructor: "Salome" },
+        { time: "21:00 - 22:00", subject: "Imaging lecture/ seminar", instructor: "megi" },
       ],
     },
     {
       day: "Thursday",
       sessions: [
-        { time: "10:00 AM - 12:00 PM", subject: "Medical Ethics" },
-        { time: "2:00 PM - 4:00 PM", subject: "Biochemistry" },
+        { time: "10:00 - 12:00", subject: "Introduction to Physiology and biochemistry Seminar", instructor: "Joneta" },
+        { time: "12:00 - 13:00", subject: "Anatomy lecture", instructor: "Mariam" },
+        { time: "14:00 - 15:00", subject: "Introduction to psychology Seminar", instructor: "Natia" },
       ],
     },
     {
       day: "Friday",
       sessions: [
-        { time: "9:00 AM - 12:00 PM", subject: "Anatomy & Histology" },
-        { time: "2:00 PM - 4:00 PM", subject: "Physiology" },
+        { time: "12:00 - 13:00", subject: "Introduction to physiology and biochemistry lecture", instructor: "Gvanca" },
+        { time: "18:00 - 17:00", subject: "Histology Seminar", instructor: "Qetevan" },
+        { time: "20:00 - 22:00", subject: "Georgian language seminar", instructor: "Salome" },
+      ],
+    },
+    {
+      day: "Saturday",
+      sessions: [
+        { time: "12:00 - 14:00", subject: "Anatomy seminar", instructor: "Ani" },
+        { time: "15:00 - 17:00", subject: "CAPS lecture/seminar", instructor: "Levan" },
+        { time: "17:00 - 18:00", subject: "Medical Biophysics lecture", instructor: "Lali" },
+        { time: "18:00 - 19:00", subject: "Medical Biophysics seminar", instructor: "Lali" },
       ],
     },
   ])
@@ -268,6 +283,64 @@ export default function TrackPlan() {
   const getSubjectFromModalKey = (key: string) => key.split("__").slice(2).join("__")
   const getDayFromModalKey = (key: string) => key.split("__")[0]
   const getSessionIndexFromModalKey = (key: string) => Number(key.split("__")[1])
+
+  // Selection logic
+  const toggleSessionSelection = (day: string, sessionIndex: number) => {
+    setSelectedSessions((prev) => {
+      const exists = prev.some(sel => sel.day === day && sel.sessionIndex === sessionIndex)
+      if (exists) {
+        return prev.filter(sel => !(sel.day === day && sel.sessionIndex === sessionIndex))
+      } else {
+        return [...prev, { day, sessionIndex }]
+      }
+    })
+  }
+
+  const isSessionSelected = (day: string, sessionIndex: number) =>
+    selectedSessions.some(sel => sel.day === day && sel.sessionIndex === sessionIndex)
+
+  // Delete logic
+  const handleDeleteSelected = () => {
+    setIsDeleteConfirmOpen(true)
+  }
+  const confirmDelete = () => {
+    setStudySchedule(prev => prev.map(dayObj => ({
+      ...dayObj,
+      sessions: dayObj.sessions.filter((_, idx) => !selectedSessions.some(sel => sel.day === dayObj.day && sel.sessionIndex === idx))
+    })).filter(dayObj => dayObj.sessions.length > 0))
+    setSelectedSessions([])
+    setIsDeleteConfirmOpen(false)
+  }
+
+  // Export logic
+  const handleExportSelected = async () => {
+    if (selectedSessions.length === 0) return
+    const selectedData = studySchedule.flatMap((dayObj) =>
+      dayObj.sessions.map((session, idx) =>
+        selectedSessions.some(sel => sel.day === dayObj.day && sel.sessionIndex === idx)
+          ? { ...session, day: dayObj.day, sessionIndex: idx }
+          : null
+      ).filter(Boolean)
+    )
+    const res = await fetch("/api/export-sessions-zip", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sessions: selectedData })
+    })
+    if (res.ok) {
+      const blob = await res.blob()
+      const url = window.URL.createObjectURL(blob)
+      const tempLink = document.createElement('a')
+      tempLink.href = url
+      tempLink.download = "sessions.zip"
+      document.body.appendChild(tempLink)
+      tempLink.click()
+      setTimeout(() => {
+        window.URL.revokeObjectURL(url)
+        tempLink.remove()
+      }, 1000)
+    }
+  }
 
   return (
     <main className="min-h-screen bg-background pt-16">
@@ -518,8 +591,11 @@ export default function TrackPlan() {
 
           <TabsContent value="schedule">
             <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-6">
-              <motion.div variants={itemVariants} className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold text-foreground">Weekly Study Schedule</h2>
+              <motion.div variants={itemVariants} className="flex flex-col md:flex-row md:justify-between md:items-center gap-2 mb-2">
+                <div className="flex gap-2 mb-2 md:mb-0">
+                  <Button variant="destructive" size="sm" onClick={handleDeleteSelected} disabled={selectedSessions.length === 0}>Delete Selected</Button>
+                  <Button variant="outline" size="sm" onClick={handleExportSelected} disabled={selectedSessions.length === 0}>Export Selected</Button>
+                </div>
                 <Button
                   className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800"
                   onClick={handleOpenSessionModal}
@@ -527,43 +603,54 @@ export default function TrackPlan() {
                   <Plus className="h-4 w-4 mr-2" /> Add Study Session
                 </Button>
               </motion.div>
-
-              <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-5 gap-4">
+              <motion.div variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                 {studySchedule.map((day, dayIndex) => (
                   <div key={dayIndex} className="flex flex-col h-full">
-                    <h2 className="text-2xl font-bold text-center mb-4">{day.day}</h2>
-                    {day.sessions.map((session, sessionIndex) => {
-                      const modalKey = `${day.day}__${sessionIndex}__${session.subject}`
-                      const file = sessionFiles[modalKey]
-                      return (
-                        <div
-                          key={sessionIndex}
-                          className="bg-blue-900/80 rounded-lg p-4 mb-4 shadow-md"
-                        >
-                          <div className="font-semibold text-base text-white">{session.subject}</div>
-                          <div className="text-sm text-blue-100 mt-1">{session.time}</div>
-                          <button
-                            className="flex items-center gap-2 mt-3 text-xs text-blue-300 hover:text-blue-400 underline"
-                            onClick={() => handleOpenDriveModal(session.subject, day.day, sessionIndex)}
-                            title="Click to view DataBase resources"
-                            style={{ padding: 0, background: 'none', border: 'none', cursor: 'pointer' }}
+                    <h2 className="text-xl font-bold text-center mb-2">{day.day}</h2>
+                    <div className="bg-white dark:bg-blue-950 rounded-2xl p-2 shadow-lg">
+                      {day.sessions.map((session, sessionIndex) => {
+                        const modalKey = `${day.day}__${sessionIndex}__${session.subject}`
+                        const file = sessionFiles[modalKey]
+                        const selected = isSessionSelected(day.day, sessionIndex)
+                        return (
+                          <div
+                            key={sessionIndex}
+                            className={`py-2 px-2 border-b border-blue-100 dark:border-blue-900 last:border-0 flex items-center text-sm min-h-[48px] rounded-xl transition-colors duration-200 ${selected ? 'bg-blue-100/60 dark:bg-blue-900/60 shadow-md' : 'hover:bg-blue-50/60 dark:hover:bg-blue-900/30'}`}
+                            style={{ boxShadow: selected ? '0 2px 8px 0 rgba(56,189,248,0.10)' : undefined }}
                           >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24"><path fill="currentColor" d="M6.5 6.5v-2A2.5 2.5 0 0 1 9 2h6a2.5 2.5 0 0 1 2.5 2.5v2a1 1 0 1 1-2 0v-2A.5.5 0 0 0 15 4H9a.5.5 0 0 0-.5.5v2a1 1 0 1 1-2 0ZM4 8a1 1 0 0 1 1 1v9.5A2.5 2.5 0 0 0 7.5 21h9a2.5 2.5 0 0 0 2.5-2.5V9a1 1 0 1 1 2 0v9.5A4.5 4.5 0 0 1 16.5 23h-9A4.5 4.5 0 0 1 3 18.5V9a1 1 0 0 1 1-1Zm4.293 4.707a1 1 0 0 1 1.414 0L11 15.586V10a1 1 0 1 1 2 0v5.586l1.293-1.293a1 1 0 1 1 1.414 1.414l-3 3a1 1 0 0 1-1.414 0l-3-3a1 1 0 0 1 0-1.414Z"/></svg>
-                            <span>Click to view DataBase resources</span>
-                          </button>
-                          {file && (
-                            <a
-                              href={`https://drive.google.com/file/d/${file.id}/view`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="block mt-2 text-blue-400 underline text-xs"
+                            <input
+                              type="checkbox"
+                              className="mr-2 accent-blue-500 align-middle w-5 h-5 cursor-pointer"
+                              checked={selected}
+                              onChange={() => toggleSessionSelection(day.day, sessionIndex)}
+                              style={{ marginTop: 0 }}
+                            />
+                            <span className="min-w-[110px] font-mono text-blue-700 dark:text-blue-200 align-middle text-base sm:text-sm">{session.time}</span>
+                            <span className="ml-2 text-foreground align-middle text-base sm:text-sm">{session.subject} <span className="text-muted-foreground">({session.instructor})</span></span>
+                            <div className="flex-1" />
+                            <button
+                              className="flex items-center gap-1 text-xs text-blue-500 hover:text-blue-700 underline bg-transparent border-0 cursor-pointer ml-2 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-blue-400 rounded"
+                              onClick={() => handleOpenDriveModal(session.subject, day.day, sessionIndex)}
+                              title="Click to view DataBase resources"
+                              style={{ padding: 0 }}
                             >
-                              {file.name}
-                            </a>
-                          )}
-                        </div>
-                      )
-                    })}
+                              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24"><path fill="currentColor" d="M6.5 6.5v-2A2.5 2.5 0 0 1 9 2h6a2.5 2.5 0 0 1 2.5 2.5v2a1 1 0 1 1-2 0v-2A.5.5 0 0 0 15 4H9a.5.5 0 0 0-.5.5v2a1 1 0 1 1-2 0ZM4 8a1 1 0 0 1 1 1v9.5A2.5 2.5 0 0 0 7.5 21h9a2.5 2.5 0 0 0 2.5-2.5V9a1 1 0 1 1 2 0v9.5A4.5 4.5 0 0 1 16.5 23h-9A4.5 4.5 0 0 1 3 18.5V9a1 1 0 0 1 1-1Zm4.293 4.707a1 1 0 0 1 1.414 0L11 15.586V10a1 1 0 1 1 2 0v5.586l1.293-1.293a1 1 0 1 1 1.414 1.414l-3 3a1 1 0 0 1-1.414 0l-3-3a1 1 0 0 1 0-1.414Z"/></svg>
+                              <span className="hidden sm:inline">Click to view DataBase resources</span>
+                            </button>
+                            {file && (
+                              <a
+                                href={`https://drive.google.com/file/d/${file.id}/view`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="block ml-2 text-blue-400 underline text-xs hover:text-blue-600 transition-colors duration-150"
+                              >
+                                {file.name}
+                              </a>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
                   </div>
                 ))}
               </motion.div>
@@ -670,6 +757,22 @@ export default function TrackPlan() {
         subject={driveModalSubject ? getSubjectFromModalKey(driveModalSubject) : ''}
         onFileSelect={handleDriveFileSelect}
       />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Selected Sessions?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete the selected session(s)? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setIsDeleteConfirmOpen(false)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </main>
   )
 }
