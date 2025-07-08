@@ -24,7 +24,6 @@ import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/contexts/auth-context"
 import { useMobile } from "@/hooks/use-mobile"
 import { useRouter } from "next/navigation"
-import { getLoggedInUser } from "@/lib/auth"
 
 export default function Home() {
   // State management
@@ -328,13 +327,6 @@ export default function Home() {
       </div>
     )
   }
-
-  useEffect(() => {
-    const user = getLoggedInUser();
-    if (!user) {
-      router.replace("/login");
-    }
-  }, [router]);
 
   return (
     <main
