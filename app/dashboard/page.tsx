@@ -16,7 +16,7 @@ import LoadingSpinner from "@/components/loading-spinner"
 import { useAuth } from "@/contexts/auth-context"
 import { useToast } from "@/components/ui/use-toast"
 import { getLoggedInUser, logoutUser } from "@/lib/auth"
-
+// demo
 export default function Dashboard() {
   const [isLoading, setIsLoading] = useState(true)
   const [activeTab, setActiveTab] = useState("overview")
