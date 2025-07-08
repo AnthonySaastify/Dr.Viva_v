@@ -15,6 +15,7 @@ import Header from "@/components/header"
 import LoadingSpinner from "@/components/loading-spinner"
 import { useAuth } from "@/contexts/auth-context"
 import { useToast } from "@/components/ui/use-toast"
+import { getLoggedInUser, logoutUser } from "@/lib/auth"
 
 export default function Dashboard() {
   const [isLoading, setIsLoading] = useState(true)
@@ -22,6 +23,13 @@ export default function Dashboard() {
   const { user, isLoading: authLoading } = useAuth()
   const router = useRouter()
   const { toast } = useToast()
+
+  useEffect(() => {
+    const user = getLoggedInUser()
+    if (!user) {
+      router.replace("/login")
+    }
+  }, [router])
 
   useEffect(() => {
     // If user is not logged in, redirect to sign in page
@@ -92,6 +100,11 @@ export default function Dashboard() {
     ],
   }
 
+  const handleLogout = () => {
+    logoutUser()
+    router.replace("/login")
+  }
+
   if (isLoading || authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -105,6 +118,9 @@ export default function Dashboard() {
       <Header />
 
       <div className="container mx-auto px-4 py-8">
+        <div className="flex justify-end p-4">
+          <button onClick={handleLogout} className="px-4 py-2 rounded bg-red-500 text-white hover:bg-red-600 transition">Logout</button>
+        </div>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

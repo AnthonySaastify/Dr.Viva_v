@@ -5,9 +5,11 @@ import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ArrowLeft, BookOpen, Video, FileText, Brain, Star, StarHalf, Download, ExternalLink } from "lucide-react"
 import Link from "next/link"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Badge } from "@/components/ui/badge"
 import Image from "next/image"
+import { useRouter } from "next/navigation"
+import { getLoggedInUser } from "@/lib/auth"
 
 // In a real app, this would come from the assessment data
 const mockUserData = {
@@ -18,7 +20,15 @@ const mockUserData = {
 }
 
 export default function Learning() {
+  const router = useRouter()
   const [activeTab, setActiveTab] = useState("recommended")
+
+  useEffect(() => {
+    const user = getLoggedInUser()
+    if (!user) {
+      router.replace("/login")
+    }
+  }, [router])
 
   return (
     <div className="max-w-4xl mx-auto">

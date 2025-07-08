@@ -11,6 +11,8 @@ import Link from "next/link"
 import Header from "@/components/header"
 import Footer from "@/components/footer"
 import LoadingSpinner from "@/components/loading-spinner"
+import { useRouter } from "next/navigation"
+import { getLoggedInUser } from "@/lib/auth"
 
 interface Subject {
   subject: string
@@ -31,6 +33,14 @@ interface Curriculum {
 export default function StudyMap() {
   const [curriculum, setCurriculum] = useState<Curriculum | null>(null)
   const [loading, setLoading] = useState(true)
+  const router = useRouter()
+
+  useEffect(() => {
+    const user = getLoggedInUser()
+    if (!user) {
+      router.replace("/login")
+    }
+  }, [router])
 
   useEffect(() => {
     const fetchCurriculum = async () => {

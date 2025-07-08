@@ -30,6 +30,8 @@ import { useToast } from "@/components/ui/use-toast"
 import { createTaskAction, updateTaskStatusAction, fetchTasksAction } from "@/app/actions/task-actions"
 import GoogleDriveModal from "@/components/GoogleDriveModal"
 import type { DriveFile } from "../services/googleDriveService"
+import { useRouter } from "next/navigation"
+import { getLoggedInUser, logoutUser } from "@/lib/auth"
 
 export default function TrackPlan() {
   const [activeTab, setActiveTab] = useState("progress")
@@ -45,6 +47,7 @@ export default function TrackPlan() {
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false)
 
   const { toast } = useToast()
+  const router = useRouter()
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -180,6 +183,18 @@ export default function TrackPlan() {
       loadTasks()
     }
   }, [activeTab])
+
+  useEffect(() => {
+    const user = getLoggedInUser()
+    if (!user) {
+      router.replace("/login")
+    }
+  }, [router])
+
+  const handleLogout = () => {
+    logoutUser()
+    router.replace("/login")
+  }
 
   const handleTaskStatusUpdate = async (taskId: number, newStatus: string) => {
     try {
@@ -344,6 +359,9 @@ export default function TrackPlan() {
 
   return (
     <main className="min-h-screen bg-background pt-16">
+      <div className="flex justify-end p-4">
+        <button onClick={handleLogout} className="px-4 py-2 rounded bg-red-500 text-white hover:bg-red-600 transition">Logout</button>
+      </div>
       <div className="container mx-auto px-4 py-8">
         <div className="mb-6">
           <Link href="/">
