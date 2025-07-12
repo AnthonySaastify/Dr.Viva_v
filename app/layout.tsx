@@ -2,8 +2,10 @@ import type React from "react"
 import type { Metadata } from "next"
 import "./globals.css"
 import { AuthProvider } from "@/contexts/auth-context"
+import { PasswordProvider } from "@/contexts/password-context"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
+import { PasswordGate } from "@/components/password-gate"
 import { useEffect } from "react"
 import GapiLoader from "@/components/GapiLoader"
 import Header from "@/components/header"
@@ -25,11 +27,15 @@ export default function RootLayout({
         {/* Load Google API client script in the browser */}
         <GapiLoader />
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <AuthProvider>
-            <Header />
-            {children}
-            <Toaster />
-          </AuthProvider>
+          <PasswordProvider>
+            <PasswordGate>
+              <AuthProvider>
+                <Header />
+                {children}
+                <Toaster />
+              </AuthProvider>
+            </PasswordGate>
+          </PasswordProvider>
         </ThemeProvider>
       </body>
     </html>

@@ -17,9 +17,9 @@ export interface SubjectFolderMap {
   [subject: string]: string; // subject name -> folder ID
 }
 
-// Google API config (replace with your own credentials)
-const CLIENT_ID = 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com';
-const API_KEY = 'YOUR_GOOGLE_API_KEY';
+// Google API config (use environment variables)
+const CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID || 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com';
+const API_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_KEY || 'YOUR_GOOGLE_API_KEY';
 const SCOPES = 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.metadata.readonly';
 const DISCOVERY_DOCS = [
   'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest',

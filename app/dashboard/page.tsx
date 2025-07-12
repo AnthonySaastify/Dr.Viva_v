@@ -15,7 +15,7 @@ import Header from "@/components/header"
 import LoadingSpinner from "@/components/loading-spinner"
 import { useAuth } from "@/contexts/auth-context"
 import { useToast } from "@/components/ui/use-toast"
-import { getLoggedInUser, logoutUser } from "@/lib/auth"
+
 // demo
 export default function Dashboard() {
   const [isLoading, setIsLoading] = useState(true)
@@ -24,31 +24,16 @@ export default function Dashboard() {
   const router = useRouter()
   const { toast } = useToast()
 
-  useEffect(() => {
-    const user = getLoggedInUser()
-    if (!user) {
-      router.replace("/login")
-    }
-  }, [router])
+
 
   useEffect(() => {
-    // If user is not logged in, redirect to sign in page
-    if (!authLoading && !user) {
-      toast({
-        title: "Authentication required",
-        description: "Please sign in to access your dashboard.",
-        variant: "default",
-      })
-      router.push("/sign-in")
-    }
-
     // Simulate loading data
     const timer = setTimeout(() => {
       setIsLoading(false)
     }, 1500)
 
     return () => clearTimeout(timer)
-  }, [user, authLoading, router, toast])
+  }, [])
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -100,10 +85,7 @@ export default function Dashboard() {
     ],
   }
 
-  const handleLogout = () => {
-    logoutUser()
-    router.replace("/login")
-  }
+
 
   if (isLoading || authLoading) {
     return (
@@ -118,9 +100,7 @@ export default function Dashboard() {
       <Header />
 
       <div className="container mx-auto px-4 py-8">
-        <div className="flex justify-end p-4">
-          <button onClick={handleLogout} className="px-4 py-2 rounded bg-red-500 text-white hover:bg-red-600 transition">Logout</button>
-        </div>
+
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

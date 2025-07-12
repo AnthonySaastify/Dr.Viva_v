@@ -4,11 +4,12 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { usePathname } from "next/navigation"
-import { Menu, X, User, LogOut, Settings } from "lucide-react"
+import { Menu, X, User, LogOut, Settings, Lock } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { useAuth } from "@/contexts/auth-context"
+import { usePassword } from "@/contexts/password-context"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,6 +25,7 @@ export default function Header() {
   const pathname = usePathname()
   const isMobile = useIsMobile()
   const { user, signOut, isAdmin } = useAuth()
+  const { logout: passwordLogout } = usePassword()
 
   // Close mobile menu when route changes
   useEffect(() => {
@@ -36,8 +38,14 @@ export default function Header() {
     { name: "Learn Space", href: "/learn-space" },
     { name: "Curriculum Hub", href: "/curriculum-hub" },
     { name: "Language", href: "/mind-boost" },
-    { name: "Next Step", href: "/next-step" },
+    { name: "Document Storage", href: "/next-step" },
+    { name: "Test Integrations", href: "/test-integrations" },
   ]
+
+  const handlePasswordLogout = () => {
+    passwordLogout()
+    signOut()
+  }
 
   return (
     <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-md border-b border-border">
@@ -103,6 +111,9 @@ export default function Header() {
                   <DropdownMenuItem onClick={signOut} className="cursor-pointer">
                     <LogOut className="mr-2 h-4 w-4" /> Sign Out
                   </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handlePasswordLogout} className="cursor-pointer">
+                    <Lock className="mr-2 h-4 w-4" /> Lock Application
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
@@ -144,6 +155,14 @@ export default function Header() {
               >
                 Sign In
               </Link>
+            )}
+            {user && (
+              <button
+                onClick={handlePasswordLogout}
+                className="block w-full text-left px-3 py-2 text-base font-medium rounded-md text-foreground bg-red-100 dark:bg-red-900 mt-2"
+              >
+                <Lock className="inline mr-2 h-4 w-4" /> Lock Application
+              </button>
             )}
           </div>
         </div>

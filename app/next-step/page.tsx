@@ -1,16 +1,409 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ArrowLeft, Globe, BookOpen, Calendar, Clock, CheckCircle2, FileText, ExternalLink } from "lucide-react"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { Badge } from "@/components/ui/badge"
+import { Progress } from "@/components/ui/progress"
+import { 
+  ArrowLeft, 
+  Upload, 
+  FileText, 
+  FolderOpen, 
+  Download, 
+  Trash2, 
+  Search,
+  Filter,
+  SortAsc,
+  Eye,
+  Calendar,
+  User,
+  File,
+  FileImage,
+  FileVideo,
+  FileAudio,
+  FileArchive,
+  MoreVertical,
+  Plus,
+  Grid,
+  List,
+  LogIn,
+  LogOut
+} from "lucide-react"
 import Link from "next/link"
-import Image from "next/image"
+import { useToast } from "@/hooks/use-toast"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import googleDriveService, { DriveFile } from "@/services/googleDriveService"
 
-export default function NextStep() {
-  const [activeTab, setActiveTab] = useState("usmle")
+interface Document {
+  id: string
+  name: string
+  type: string
+  size: string
+  uploadedBy: string
+  uploadedAt: string
+  description?: string
+  tags: string[]
+  driveId?: string
+  webViewLink?: string
+  webContentLink?: string
+}
+
+export default function DocumentStorage() {
+  const [documents, setDocuments] = useState<Document[]>([])
+  const [isUploading, setIsUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [selectedFilter, setSelectedFilter] = useState("all")
+  const [sortBy, setSortBy] = useState("date")
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
+  const [showUploadForm, setShowUploadForm] = useState(false)
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [documentName, setDocumentName] = useState("")
+  const [documentDescription, setDocumentDescription] = useState("")
+  const [documentTags, setDocumentTags] = useState("")
+  const [isLoading, setIsLoading] = useState(true)
+  const [isSignedIn, setIsSignedIn] = useState(false)
+  
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const { toast } = useToast()
+
+  // Initialize Google Drive and load documents
+  useEffect(() => {
+    initializeGoogleDrive()
+  }, [])
+
+  const initializeGoogleDrive = async () => {
+    try {
+      setIsLoading(true)
+      await googleDriveService.initGapi()
+      
+      if (googleDriveService.isSignedIn()) {
+        setIsSignedIn(true)
+        await loadDocumentsFromDrive()
+      } else {
+        // Load mock data if not signed in
+        loadMockDocuments()
+      }
+    } catch (error) {
+      console.error("Failed to initialize Google Drive:", error)
+      loadMockDocuments()
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const loadDocumentsFromDrive = async () => {
+    try {
+      // Use the specific Documents folder ID from environment variables
+      const documentsFolderId = process.env.GOOGLE_DRIVE_FOLDER_ID || await googleDriveService.ensureFolderForSubject("Documents")
+      
+      // List all files in the Documents folder
+      const driveFiles = await googleDriveService.listDriveFiles(`'${documentsFolderId}' in parents`)
+      
+      const driveDocuments: Document[] = driveFiles.map((file: DriveFile) => ({
+        id: file.id,
+        name: file.name,
+        type: file.name.split('.').pop() || 'unknown',
+        size: "Unknown", // Drive API doesn't provide size in basic listing
+        uploadedBy: "Google Drive User",
+        uploadedAt: new Date().toISOString().split('T')[0], // We'll need to get this from file metadata
+        description: "",
+        tags: [],
+        driveId: file.id,
+        webViewLink: `https://drive.google.com/file/d/${file.id}/view`,
+        webContentLink: `https://drive.google.com/uc?export=download&id=${file.id}`
+      }))
+      
+      setDocuments(driveDocuments)
+    } catch (error) {
+      console.error("Failed to load documents from Drive:", error)
+      toast({
+        title: "Error",
+        description: "Failed to load documents from Google Drive",
+        variant: "destructive",
+      })
+      loadMockDocuments()
+    }
+  }
+
+  const loadMockDocuments = () => {
+    const mockDocuments: Document[] = [
+      {
+        id: "1",
+        name: "USMLE Step 1 Study Guide",
+        type: "pdf",
+        size: "2.5 MB",
+        uploadedBy: "Dr. Smith",
+        uploadedAt: "2024-01-15",
+        description: "Comprehensive study guide for USMLE Step 1 preparation",
+        tags: ["USMLE", "Step 1", "Study Guide"],
+        driveId: "1abc123"
+      },
+      {
+        id: "2",
+        name: "Anatomy Notes",
+        type: "docx",
+        size: "1.8 MB",
+        uploadedBy: "Dr. Johnson",
+        uploadedAt: "2024-01-14",
+        description: "Detailed anatomy notes with diagrams",
+        tags: ["Anatomy", "Notes", "MBBS"],
+        driveId: "2def456"
+      },
+      {
+        id: "3",
+        name: "Clinical Cases",
+        type: "pdf",
+        size: "3.2 MB",
+        uploadedBy: "Dr. Williams",
+        uploadedAt: "2024-01-13",
+        description: "Collection of clinical case studies",
+        tags: ["Clinical", "Cases", "Medicine"],
+        driveId: "3ghi789"
+      },
+      {
+        id: "4",
+        name: "Pharmacology Review",
+        type: "pptx",
+        size: "4.1 MB",
+        uploadedBy: "Dr. Brown",
+        uploadedAt: "2024-01-12",
+        description: "Pharmacology review slides",
+        tags: ["Pharmacology", "Review", "Slides"],
+        driveId: "4jkl012"
+      }
+    ]
+    setDocuments(mockDocuments)
+  }
+
+  const handleSignIn = async () => {
+    try {
+      await googleDriveService.signIn()
+      setIsSignedIn(true)
+      await loadDocumentsFromDrive()
+      toast({
+        title: "Signed in successfully",
+        description: "Connected to Google Drive",
+      })
+    } catch (error) {
+      toast({
+        title: "Sign in failed",
+        description: "Failed to connect to Google Drive",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleSignOut = async () => {
+    try {
+      await googleDriveService.signOut()
+      setIsSignedIn(false)
+      loadMockDocuments()
+      toast({
+        title: "Signed out",
+        description: "Disconnected from Google Drive",
+      })
+    } catch (error) {
+      toast({
+        title: "Sign out failed",
+        description: "Failed to disconnect from Google Drive",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const getFileIcon = (type: string) => {
+    switch (type.toLowerCase()) {
+      case "pdf":
+        return <FileText className="h-6 w-6 text-red-500" />
+      case "docx":
+      case "doc":
+        return <FileText className="h-6 w-6 text-blue-500" />
+      case "pptx":
+      case "ppt":
+        return <FileText className="h-6 w-6 text-orange-500" />
+      case "xlsx":
+      case "xls":
+        return <FileText className="h-6 w-6 text-green-500" />
+      case "jpg":
+      case "jpeg":
+      case "png":
+        return <FileImage className="h-6 w-6 text-purple-500" />
+      case "mp4":
+      case "avi":
+        return <FileVideo className="h-6 w-6 text-pink-500" />
+      case "mp3":
+      case "wav":
+        return <FileAudio className="h-6 w-6 text-yellow-500" />
+      case "zip":
+      case "rar":
+        return <FileArchive className="h-6 w-6 text-gray-500" />
+      default:
+        return <File className="h-6 w-6 text-gray-500" />
+    }
+  }
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (file) {
+      setSelectedFile(file)
+      setDocumentName(file.name)
+    }
+  }
+
+  const handleUpload = async () => {
+    if (!selectedFile) {
+      toast({
+        title: "No file selected",
+        description: "Please select a file to upload",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (!isSignedIn) {
+      toast({
+        title: "Not signed in",
+        description: "Please sign in to Google Drive to upload files",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setIsUploading(true)
+    setUploadProgress(0)
+
+    try {
+      // Use the specific Documents folder ID from environment variables
+      const documentsFolderId = process.env.GOOGLE_DRIVE_FOLDER_ID || await googleDriveService.ensureFolderForSubject("Documents")
+      
+      // Upload file to Google Drive
+      const uploadedFile = await googleDriveService.uploadFileToFolder(selectedFile, documentsFolderId)
+      
+      // Create new document entry
+      const newDocument: Document = {
+        id: uploadedFile.id,
+        name: documentName || selectedFile.name,
+        type: selectedFile.name.split('.').pop() || 'unknown',
+        size: `${(selectedFile.size / 1024 / 1024).toFixed(1)} MB`,
+        uploadedBy: "Current User",
+        uploadedAt: new Date().toISOString().split('T')[0],
+        description: documentDescription,
+        tags: documentTags.split(',').map(tag => tag.trim()).filter(tag => tag),
+        driveId: uploadedFile.id,
+        webViewLink: `https://drive.google.com/file/d/${uploadedFile.id}/view`,
+        webContentLink: `https://drive.google.com/uc?export=download&id=${uploadedFile.id}`
+      }
+
+      setDocuments(prev => [newDocument, ...prev])
+      
+      toast({
+        title: "Upload successful",
+        description: `${newDocument.name} has been uploaded to Google Drive`,
+      })
+
+      // Reset form
+      setSelectedFile(null)
+      setDocumentName("")
+      setDocumentDescription("")
+      setDocumentTags("")
+      setShowUploadForm(false)
+      setUploadProgress(0)
+
+    } catch (error) {
+      console.error("Upload error:", error)
+      toast({
+        title: "Upload failed",
+        description: "An error occurred while uploading the file to Google Drive",
+        variant: "destructive",
+      })
+    } finally {
+      setIsUploading(false)
+    }
+  }
+
+  const handleDownload = (document: Document) => {
+    if (document.webContentLink) {
+      // Open download link in new tab
+      window.open(document.webContentLink, '_blank')
+      toast({
+        title: "Download started",
+        description: `Downloading ${document.name}`,
+      })
+    } else {
+      toast({
+        title: "Download failed",
+        description: "Download link not available",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleView = (document: Document) => {
+    if (document.webViewLink) {
+      // Open file in Google Drive viewer
+      window.open(document.webViewLink, '_blank')
+    } else {
+      toast({
+        title: "View failed",
+        description: "View link not available",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleDelete = async (documentId: string) => {
+    try {
+      if (isSignedIn && documents.find(doc => doc.id === documentId)?.driveId) {
+        // Delete from Google Drive
+        await (window as any).gapi.client.drive.files.delete({
+          fileId: documentId
+        })
+      }
+      
+      setDocuments(prev => prev.filter(doc => doc.id !== documentId))
+      toast({
+        title: "Document deleted",
+        description: "The document has been removed",
+      })
+    } catch (error) {
+      toast({
+        title: "Delete failed",
+        description: "Failed to delete document",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const filteredDocuments = documents
+    .filter(doc => 
+      doc.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      doc.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      doc.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
+    )
+    .filter(doc => selectedFilter === "all" || doc.type === selectedFilter)
+    .sort((a, b) => {
+      switch (sortBy) {
+        case "name":
+          return a.name.localeCompare(b.name)
+        case "date":
+          return new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime()
+        case "size":
+          return parseFloat(a.size) - parseFloat(b.size)
+        default:
+          return 0
+      }
+    })
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -31,131 +424,20 @@ export default function NextStep() {
     },
   }
 
-  // Mock data for USMLE
-  const usmleSteps = [
-    {
-      id: 1,
-      title: "USMLE Step 1",
-      description: "Tests basic science knowledge and its application to medicine",
-      duration: "8 hours",
-      questions: "280 questions",
-      passingScore: "196 (3-digit score)",
-      eligibility: "After completing basic science curriculum",
-      resources: ["First Aid for the USMLE Step 1", "UWorld Question Bank", "Boards and Beyond", "Pathoma"],
-      tips: [
-        "Start preparing 6-8 months in advance",
-        "Focus on high-yield topics",
-        "Take regular practice tests",
-        "Use spaced repetition for memorization",
-      ],
-    },
-    {
-      id: 2,
-      title: "USMLE Step 2 CK",
-      description: "Tests clinical knowledge and application",
-      duration: "9 hours",
-      questions: "318 questions",
-      passingScore: "209 (3-digit score)",
-      eligibility: "After completing clinical clerkships",
-      resources: ["UWorld Step 2 CK Question Bank", "First Aid for the USMLE Step 2 CK", "Online MedEd", "Amboss"],
-      tips: [
-        "Build on Step 1 knowledge",
-        "Focus on patient management",
-        "Practice clinical vignettes",
-        "Review high-yield clinical topics",
-      ],
-    },
-    {
-      id: 3,
-      title: "USMLE Step 3",
-      description: "Tests readiness for unsupervised practice",
-      duration: "2 days (7 hours + 9 hours)",
-      questions: "Multiple-choice questions and case simulations",
-      passingScore: "198 (3-digit score)",
-      eligibility: "After earning MD degree and passing Step 1 and Step 2 CK",
-      resources: [
-        "UWorld Step 3 Question Bank",
-        "First Aid for the USMLE Step 3",
-        "Master the Boards Step 3",
-        "CCS Case Simulator",
-      ],
-      tips: [
-        "Focus on patient management",
-        "Practice CCS cases extensively",
-        "Review common outpatient scenarios",
-        "Study biostatistics and epidemiology",
-      ],
-    },
-  ]
-
-  // Mock data for PLAB
-  const plabSteps = [
-    {
-      id: 1,
-      title: "PLAB 1",
-      description: "Tests theoretical medical knowledge through multiple-choice questions",
-      duration: "3 hours",
-      questions: "180 questions",
-      passingScore: "Varies by exam (typically around 120-130 marks)",
-      eligibility: "Medical degree recognized by GMC and IELTS/OET score",
-      resources: ["PLAB 1 - 1700 EMQs", "Plabable Question Bank", "Samson Notes", "PLAB 1 Flashcards"],
-      tips: [
-        "Focus on common conditions in the UK",
-        "Study the NICE guidelines",
-        "Practice time management",
-        "Join study groups for discussion",
-      ],
-    },
-    {
-      id: 2,
-      title: "PLAB 2",
-      description: "Objective structured clinical examination (OSCE) with 16 stations",
-      duration: "3 hours 30 minutes",
-      format: "16 OSCE stations (each 8 minutes)",
-      passingScore: "Varies by exam",
-      eligibility: "Pass PLAB 1 within last 2 years",
-      resources: [
-        "PLAB 2 Recalled Stations",
-        "PLAB 2 Made Easy",
-        "Clinical Skills for PLAB",
-        "Communication Skills for PLAB 2",
-      ],
-      tips: [
-        "Practice with a partner or group",
-        "Focus on communication skills",
-        "Learn the UK medical ethics principles",
-        "Familiarize yourself with UK healthcare system",
-      ],
-    },
-  ]
-
-  // Mock data for other exams
-  const otherExams = [
-    {
-      id: 1,
-      title: "NEET-PG (India)",
-      description: "National Eligibility cum Entrance Test for Postgraduate Medical Courses in India",
-      format: "Multiple-choice questions",
-      eligibility: "MBBS degree and completion of internship",
-      resources: ["NEET-PG Prep", "Marrow", "PrepLadder", "DAMS"],
-    },
-    {
-      id: 2,
-      title: "AMC (Australia)",
-      description: "Australian Medical Council examination for international medical graduates",
-      format: "MCQ exam and clinical examination",
-      eligibility: "Primary medical degree from a recognized institution",
-      resources: ["AMC MCQ Examination Books", "AMC Clinical Examination Books", "AMC Question Banks"],
-    },
-    {
-      id: 3,
-      title: "MCCQE (Canada)",
-      description: "Medical Council of Canada Qualifying Examination",
-      format: "Part I (MCQ and clinical decision-making) and Part II (OSCE)",
-      eligibility: "Medical degree from a recognized institution",
-      resources: ["Toronto Notes", "CanadaQBank", "MCCQE Practice Tests"],
-    },
-  ]
+  if (isLoading) {
+    return (
+      <main className="min-h-screen bg-background pt-20">
+        <div className="container mx-auto px-4 py-8">
+          <div className="flex items-center justify-center min-h-[400px]">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+              <p className="text-muted-foreground">Loading documents...</p>
+            </div>
+          </div>
+        </div>
+      </main>
+    )
+  }
 
   return (
     <main className="min-h-screen bg-background pt-20">
@@ -168,596 +450,319 @@ export default function NextStep() {
           </Link>
 
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-            <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">Next Step</h1>
-            <p className="text-lg text-muted-foreground mb-6">
-              Prepare for international medical licensing exams and career advancement
-            </p>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-4">
-                    <div className="p-3 rounded-full bg-blue-100 dark:bg-blue-900">
-                      <Globe className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-foreground">International Pathways</h3>
-                      <p className="text-sm text-muted-foreground">Multiple licensing options</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-4">
-                    <div className="p-3 rounded-full bg-teal-100 dark:bg-teal-900">
-                      <BookOpen className="h-6 w-6 text-teal-600 dark:text-teal-400" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-foreground">Comprehensive Resources</h3>
-                      <p className="text-sm text-muted-foreground">Study guides and materials</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-4">
-                    <div className="p-3 rounded-full bg-violet-100 dark:bg-violet-900">
-                      <Calendar className="h-6 w-6 text-violet-600 dark:text-violet-400" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-foreground">Exam Timelines</h3>
-                      <p className="text-sm text-muted-foreground">Planning and scheduling</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+            <div className="flex justify-between items-start mb-6">
+              <div>
+                <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">Document Storage</h1>
+                <p className="text-lg text-muted-foreground">
+                  Store, organize, and access your medical documents and study materials
+                </p>
+              </div>
+              
+              {/* Google Drive Authentication */}
+              <div className="flex gap-2">
+                {!isSignedIn ? (
+                  <Button onClick={handleSignIn} variant="outline">
+                    <LogIn className="h-4 w-4 mr-2" />
+                    Connect Google Drive
+                  </Button>
+                ) : (
+                  <Button onClick={handleSignOut} variant="outline">
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Disconnect Drive
+                  </Button>
+                )}
+              </div>
             </div>
           </motion.div>
         </div>
 
-        <Tabs defaultValue="usmle" value={activeTab} onValueChange={setActiveTab} className="mb-8">
-          <TabsList className="mb-6">
-            <TabsTrigger value="usmle">USMLE (USA)</TabsTrigger>
-            <TabsTrigger value="plab">PLAB (UK)</TabsTrigger>
-            <TabsTrigger value="other">Other Exams</TabsTrigger>
-            <TabsTrigger value="resources">Resources</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="usmle">
-            <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-6">
-              <motion.div variants={itemVariants}>
-                <Card className="mb-6">
-                  <CardHeader>
-                    <CardTitle>United States Medical Licensing Examination (USMLE)</CardTitle>
-                    <CardDescription>
-                      A three-step examination for medical licensure in the United States
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-muted-foreground mb-4">
-                      The USMLE is a three-step examination sponsored by the Federation of State Medical Boards (FSMB)
-                      and the National Board of Medical Examiners (NBME). It assesses a physician's ability to apply
-                      knowledge, concepts, and principles, and to demonstrate fundamental patient-centered skills.
+        {/* Upload Section */}
+        <motion.div variants={itemVariants} initial="hidden" animate="visible" className="mb-8">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Upload className="h-5 w-5" />
+                Upload Documents
+                {isSignedIn && <Badge variant="secondary">Google Drive Connected</Badge>}
+              </CardTitle>
+              <CardDescription>
+                {isSignedIn 
+                  ? "Upload your medical documents, study materials, and resources to Google Drive"
+                  : "Sign in to Google Drive to upload and store your documents securely"
+                }
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {!showUploadForm ? (
+                <div className="text-center py-8">
+                  <Button 
+                    onClick={() => setShowUploadForm(true)} 
+                    className="mb-4"
+                    disabled={!isSignedIn}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Upload New Document
+                  </Button>
+                  <p className="text-sm text-muted-foreground">
+                    Supported formats: PDF, DOCX, PPTX, XLSX, Images, Videos, Audio
+                  </p>
+                  {!isSignedIn && (
+                    <p className="text-sm text-amber-600 mt-2">
+                      ⚠️ Sign in to Google Drive to enable file uploads
                     </p>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg">
-                        <h3 className="font-medium text-foreground mb-1">Step 1</h3>
-                        <p className="text-sm text-muted-foreground">Basic Science Foundations</p>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="file">Select File</Label>
+                    <Input
+                      id="file"
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handleFileSelect}
+                      accept=".pdf,.docx,.doc,.pptx,.ppt,.xlsx,.xls,.jpg,.jpeg,.png,.mp4,.avi,.mp3,.wav,.zip,.rar"
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="name">Document Name</Label>
+                    <Input
+                      id="name"
+                      value={documentName}
+                      onChange={(e) => setDocumentName(e.target.value)}
+                      placeholder="Enter document name"
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="description">Description (Optional)</Label>
+                    <Textarea
+                      id="description"
+                      value={documentDescription}
+                      onChange={(e) => setDocumentDescription(e.target.value)}
+                      placeholder="Enter document description"
+                      rows={3}
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="tags">Tags (Optional)</Label>
+                    <Input
+                      id="tags"
+                      value={documentTags}
+                      onChange={(e) => setDocumentTags(e.target.value)}
+                      placeholder="Enter tags separated by commas (e.g., USMLE, Anatomy, Notes)"
+                    />
+                  </div>
+
+                  {isUploading && (
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span>Uploading to Google Drive...</span>
+                        <span>{uploadProgress}%</span>
                       </div>
-                      <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg">
-                        <h3 className="font-medium text-foreground mb-1">Step 2 CK</h3>
-                        <p className="text-sm text-muted-foreground">Clinical Knowledge</p>
-                      </div>
-                      <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg">
-                        <h3 className="font-medium text-foreground mb-1">Step 3</h3>
-                        <p className="text-sm text-muted-foreground">Advanced Clinical Medicine</p>
-                      </div>
+                      <Progress value={uploadProgress} />
                     </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
+                  )}
 
-              {usmleSteps.map((step) => (
-                <motion.div key={step.id} variants={itemVariants}>
-                  <Card className="mb-6">
-                    <CardHeader>
-                      <CardTitle>{step.title}</CardTitle>
-                      <CardDescription>{step.description}</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                          <h3 className="text-lg font-medium text-foreground mb-3">Exam Details</h3>
-                          <ul className="space-y-2">
-                            <li className="flex items-start">
-                              <Clock className="h-4 w-4 text-muted-foreground mr-2 mt-1" />
-                              <span className="text-muted-foreground">
-                                <span className="font-medium text-foreground">Duration:</span> {step.duration}
-                              </span>
-                            </li>
-                            <li className="flex items-start">
-                              <FileText className="h-4 w-4 text-muted-foreground mr-2 mt-1" />
-                              <span className="text-muted-foreground">
-                                <span className="font-medium text-foreground">Format:</span> {step.questions}
-                              </span>
-                            </li>
-                            <li className="flex items-start">
-                              <CheckCircle2 className="h-4 w-4 text-muted-foreground mr-2 mt-1" />
-                              <span className="text-muted-foreground">
-                                <span className="font-medium text-foreground">Passing Score:</span> {step.passingScore}
-                              </span>
-                            </li>
-                            <li className="flex items-start">
-                              <Calendar className="h-4 w-4 text-muted-foreground mr-2 mt-1" />
-                              <span className="text-muted-foreground">
-                                <span className="font-medium text-foreground">Eligibility:</span> {step.eligibility}
-                              </span>
-                            </li>
-                          </ul>
+                  <div className="flex gap-2">
+                    <Button 
+                      onClick={handleUpload} 
+                      disabled={!selectedFile || isUploading || !isSignedIn}
+                      className="flex-1"
+                    >
+                      {isUploading ? "Uploading..." : "Upload to Google Drive"}
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setShowUploadForm(false)}
+                      disabled={isUploading}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </motion.div>
 
-                          <h3 className="text-lg font-medium text-foreground mt-6 mb-3">Study Tips</h3>
-                          <ul className="space-y-2">
-                            {step.tips.map((tip, index) => (
-                              <li key={index} className="flex items-start">
-                                <span className="text-blue-600 dark:text-blue-400 mr-2">•</span>
-                                <span className="text-muted-foreground">{tip}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-
-                        <div>
-                          <h3 className="text-lg font-medium text-foreground mb-3">Recommended Resources</h3>
-                          <ul className="space-y-2">
-                            {step.resources.map((resource, index) => (
-                              <li key={index} className="flex items-start">
-                                <span className="text-blue-600 dark:text-blue-400 mr-2">•</span>
-                                <span className="text-muted-foreground">{resource}</span>
-                              </li>
-                            ))}
-                          </ul>
-
-                          <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-950 rounded-lg">
-                            <h4 className="font-medium text-foreground mb-2">Timeline Recommendation</h4>
-                            <p className="text-sm text-muted-foreground">
-                              {step.id === 1
-                                ? "Begin preparation at least 6-8 months before your target exam date. Dedicate the first 4-5 months to content review and the remaining time to practice questions and self-assessment exams."
-                                : step.id === 2
-                                  ? "Start preparing 4-6 months before your target exam date. Use your clinical rotations as active learning opportunities and supplement with focused study."
-                                  : "Begin preparation 3-4 months before your target exam date. Focus on clinical management and decision-making, with special attention to the CCS portion."}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                    <CardFooter>
-                      <Button className="w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800">
-                        <ExternalLink className="h-4 w-4 mr-2" /> Visit Official USMLE Website
+        {/* Search and Filter Section */}
+        <motion.div variants={itemVariants} initial="hidden" animate="visible" className="mb-6">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex-1">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search documents..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+                
+                <div className="flex gap-2">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline">
+                        <Filter className="h-4 w-4 mr-2" />
+                        {selectedFilter === "all" ? "All Types" : selectedFilter.toUpperCase()}
                       </Button>
-                    </CardFooter>
-                  </Card>
-                </motion.div>
-              ))}
-            </motion.div>
-          </TabsContent>
-
-          <TabsContent value="plab">
-            <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-6">
-              <motion.div variants={itemVariants}>
-                <Card className="mb-6">
-                  <CardHeader>
-                    <CardTitle>Professional and Linguistic Assessments Board (PLAB)</CardTitle>
-                    <CardDescription>
-                      The main route for international medical graduates to practice medicine in the UK
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-muted-foreground mb-4">
-                      The PLAB test is the main route by which International Medical Graduates (IMGs) demonstrate that
-                      they have the necessary skills and knowledge to practice medicine in the UK. It's administered by
-                      the General Medical Council (GMC) and consists of two parts.
-                    </p>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg">
-                        <h3 className="font-medium text-foreground mb-1">PLAB 1</h3>
-                        <p className="text-sm text-muted-foreground">Written Examination</p>
-                      </div>
-                      <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg">
-                        <h3 className="font-medium text-foreground mb-1">PLAB 2</h3>
-                        <p className="text-sm text-muted-foreground">
-                          Objective Structured Clinical Examination (OSCE)
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-
-              {plabSteps.map((step) => (
-                <motion.div key={step.id} variants={itemVariants}>
-                  <Card className="mb-6">
-                    <CardHeader>
-                      <CardTitle>{step.title}</CardTitle>
-                      <CardDescription>{step.description}</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                          <h3 className="text-lg font-medium text-foreground mb-3">Exam Details</h3>
-                          <ul className="space-y-2">
-                            <li className="flex items-start">
-                              <Clock className="h-4 w-4 text-muted-foreground mr-2 mt-1" />
-                              <span className="text-muted-foreground">
-                                <span className="font-medium text-foreground">Duration:</span> {step.duration}
-                              </span>
-                            </li>
-                            <li className="flex items-start">
-                              <FileText className="h-4 w-4 text-muted-foreground mr-2 mt-1" />
-                              <span className="text-muted-foreground">
-                                <span className="font-medium text-foreground">Format:</span>{" "}
-                                {step.questions || step.format}
-                              </span>
-                            </li>
-                            <li className="flex items-start">
-                              <CheckCircle2 className="h-4 w-4 text-muted-foreground mr-2 mt-1" />
-                              <span className="text-muted-foreground">
-                                <span className="font-medium text-foreground">Passing Score:</span> {step.passingScore}
-                              </span>
-                            </li>
-                            <li className="flex items-start">
-                              <Calendar className="h-4 w-4 text-muted-foreground mr-2 mt-1" />
-                              <span className="text-muted-foreground">
-                                <span className="font-medium text-foreground">Eligibility:</span> {step.eligibility}
-                              </span>
-                            </li>
-                          </ul>
-
-                          <h3 className="text-lg font-medium text-foreground mt-6 mb-3">Study Tips</h3>
-                          <ul className="space-y-2">
-                            {step.tips.map((tip, index) => (
-                              <li key={index} className="flex items-start">
-                                <span className="text-blue-600 dark:text-blue-400 mr-2">•</span>
-                                <span className="text-muted-foreground">{tip}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-
-                        <div>
-                          <h3 className="text-lg font-medium text-foreground mb-3">Recommended Resources</h3>
-                          <ul className="space-y-2">
-                            {step.resources.map((resource, index) => (
-                              <li key={index} className="flex items-start">
-                                <span className="text-blue-600 dark:text-blue-400 mr-2">•</span>
-                                <span className="text-muted-foreground">{resource}</span>
-                              </li>
-                            ))}
-                          </ul>
-
-                          <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-950 rounded-lg">
-                            <h4 className="font-medium text-foreground mb-2">Timeline Recommendation</h4>
-                            <p className="text-sm text-muted-foreground">
-                              {step.id === 1
-                                ? "Prepare for 3-4 months before your exam date. Focus on understanding UK clinical guidelines and practice patterns, which may differ from your home country."
-                                : "After passing PLAB 1, allow 2-3 months of focused preparation for PLAB 2. Consider joining a preparation course that offers mock OSCE practice."}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                    <CardFooter>
-                      <Button className="w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800">
-                        <ExternalLink className="h-4 w-4 mr-2" /> Visit Official GMC Website
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      <DropdownMenuItem onClick={() => setSelectedFilter("all")}>
+                        All Types
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setSelectedFilter("pdf")}>
+                        PDF
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setSelectedFilter("docx")}>
+                        Word Documents
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setSelectedFilter("pptx")}>
+                        PowerPoint
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setSelectedFilter("xlsx")}>
+                        Excel
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                  
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline">
+                        <SortAsc className="h-4 w-4 mr-2" />
+                        Sort
                       </Button>
-                    </CardFooter>
-                  </Card>
-                </motion.div>
-              ))}
-            </motion.div>
-          </TabsContent>
-
-          <TabsContent value="other">
-            <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-6">
-              <motion.div variants={itemVariants}>
-                <Card className="mb-6">
-                  <CardHeader>
-                    <CardTitle>Other International Medical Licensing Exams</CardTitle>
-                    <CardDescription>
-                      Explore medical licensing pathways for different countries around the world
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-muted-foreground mb-4">
-                      Besides the USMLE and PLAB, there are several other medical licensing exams for international
-                      medical graduates seeking to practice in different countries. Each has its own requirements,
-                      format, and preparation strategies.
-                    </p>
-                  </CardContent>
-                </Card>
-              </motion.div>
-
-              <motion.div variants={itemVariants}>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {otherExams.map((exam) => (
-                    <Card key={exam.id} className="h-full">
-                      <CardHeader>
-                        <CardTitle>{exam.title}</CardTitle>
-                        <CardDescription>{exam.description}</CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-4">
-                          <div>
-                            <h3 className="font-medium text-foreground mb-2">Format</h3>
-                            <p className="text-sm text-muted-foreground">{exam.format}</p>
-                          </div>
-                          <div>
-                            <h3 className="font-medium text-foreground mb-2">Eligibility</h3>
-                            <p className="text-sm text-muted-foreground">{exam.eligibility}</p>
-                          </div>
-                          <div>
-                            <h3 className="font-medium text-foreground mb-2">Resources</h3>
-                            <ul className="space-y-1">
-                              {exam.resources.map((resource, index) => (
-                                <li key={index} className="text-sm text-muted-foreground flex items-start">
-                                  <span className="text-blue-600 dark:text-blue-400 mr-2">•</span>
-                                  {resource}
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        </div>
-                      </CardContent>
-                      <CardFooter>
-                        <Button className="w-full">Learn More</Button>
-                      </CardFooter>
-                    </Card>
-                  ))}
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      <DropdownMenuItem onClick={() => setSortBy("date")}>
+                        Date
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setSortBy("name")}>
+                        Name
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setSortBy("size")}>
+                        Size
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                  
+                  <Button
+                    variant="outline"
+                    onClick={() => setViewMode(viewMode === "grid" ? "list" : "grid")}
+                  >
+                    {viewMode === "grid" ? <List className="h-4 w-4" /> : <Grid className="h-4 w-4" />}
+                  </Button>
                 </div>
-              </motion.div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
 
-              <motion.div variants={itemVariants}>
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Comparison of International Pathways</CardTitle>
-                    <CardDescription>Key differences between major licensing exams</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="overflow-x-auto">
-                      <table className="w-full border-collapse">
-                        <thead>
-                          <tr className="border-b border-border">
-                            <th className="text-left py-3 px-4 font-medium text-foreground">Exam</th>
-                            <th className="text-left py-3 px-4 font-medium text-foreground">Country</th>
-                            <th className="text-left py-3 px-4 font-medium text-foreground">Difficulty</th>
-                            <th className="text-left py-3 px-4 font-medium text-foreground">Cost</th>
-                            <th className="text-left py-3 px-4 font-medium text-foreground">Time to Complete</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <tr className="border-b border-border">
-                            <td className="py-3 px-4 text-foreground">USMLE</td>
-                            <td className="py-3 px-4 text-muted-foreground">USA</td>
-                            <td className="py-3 px-4 text-muted-foreground">High</td>
-                            <td className="py-3 px-4 text-muted-foreground">$$$$ (Approx. $5,000 total)</td>
-                            <td className="py-3 px-4 text-muted-foreground">1-2 years</td>
-                          </tr>
-                          <tr className="border-b border-border">
-                            <td className="py-3 px-4 text-foreground">PLAB</td>
-                            <td className="py-3 px-4 text-muted-foreground">UK</td>
-                            <td className="py-3 px-4 text-muted-foreground">Moderate</td>
-                            <td className="py-3 px-4 text-muted-foreground">$$ (Approx. $1,500 total)</td>
-                            <td className="py-3 px-4 text-muted-foreground">6-12 months</td>
-                          </tr>
-                          <tr className="border-b border-border">
-                            <td className="py-3 px-4 text-foreground">AMC</td>
-                            <td className="py-3 px-4 text-muted-foreground">Australia</td>
-                            <td className="py-3 px-4 text-muted-foreground">Moderate-High</td>
-                            <td className="py-3 px-4 text-muted-foreground">$$$ (Approx. $3,000 total)</td>
-                            <td className="py-3 px-4 text-muted-foreground">1-1.5 years</td>
-                          </tr>
-                          <tr className="border-b border-border">
-                            <td className="py-3 px-4 text-foreground">MCCQE</td>
-                            <td className="py-3 px-4 text-muted-foreground">Canada</td>
-                            <td className="py-3 px-4 text-muted-foreground">High</td>
-                            <td className="py-3 px-4 text-muted-foreground">$$$ (Approx. $2,500 total)</td>
-                            <td className="py-3 px-4 text-muted-foreground">1-1.5 years</td>
-                          </tr>
-                          <tr>
-                            <td className="py-3 px-4 text-foreground">NEET-PG</td>
-                            <td className="py-3 px-4 text-muted-foreground">India</td>
-                            <td className="py-3 px-4 text-muted-foreground">Very High</td>
-                            <td className="py-3 px-4 text-muted-foreground">$ (Approx. $300)</td>
-                            <td className="py-3 px-4 text-muted-foreground">6-12 months</td>
-                          </tr>
-                        </tbody>
-                      </table>
+        {/* Documents Grid/List */}
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          className={viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "space-y-4"}
+        >
+          {filteredDocuments.map((document) => (
+            <motion.div key={document.id} variants={itemVariants}>
+              <Card className="h-full">
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-3">
+                      {getFileIcon(document.type)}
+                      <div className="flex-1 min-w-0">
+                        <CardTitle className="text-lg truncate">{document.name}</CardTitle>
+                        <p className="text-sm text-muted-foreground">{document.type.toUpperCase()}</p>
+                      </div>
                     </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent>
+                        <DropdownMenuItem onClick={() => handleView(document)}>
+                          <Eye className="h-4 w-4 mr-2" />
+                          View
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleDownload(document)}>
+                          <Download className="h-4 w-4 mr-2" />
+                          Download
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          onClick={() => handleDelete(document.id)}
+                          className="text-red-600"
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </CardHeader>
+                
+                <CardContent>
+                  {document.description && (
+                    <p className="text-sm text-muted-foreground mb-3">{document.description}</p>
+                  )}
+                  
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
+                    <span className="flex items-center gap-1">
+                      <User className="h-3 w-3" />
+                      {document.uploadedBy}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Calendar className="h-3 w-3" />
+                      {document.uploadedAt}
+                    </span>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">{document.size}</span>
+                    {isSignedIn && document.driveId && (
+                      <Badge variant="secondary" className="text-xs">
+                        Google Drive
+                      </Badge>
+                    )}
+                  </div>
+                  
+                  {document.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-3">
+                      {document.tags.map((tag, index) => (
+                        <Badge key={index} variant="outline" className="text-xs">
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
             </motion.div>
-          </TabsContent>
+          ))}
+        </motion.div>
 
-          <TabsContent value="resources">
-            <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-6">
-              <motion.div variants={itemVariants}>
-                <Card className="mb-6">
-                  <CardHeader>
-                    <CardTitle>Study Resources and Materials</CardTitle>
-                    <CardDescription>
-                      Comprehensive collection of resources for international medical licensing exams
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-muted-foreground mb-4">
-                      Preparing for international medical licensing exams requires access to high-quality study
-                      materials. Below is a curated list of resources for different exams, including books, question
-                      banks, video courses, and more.
-                    </p>
-                  </CardContent>
-                </Card>
-              </motion.div>
-
-              <motion.div variants={itemVariants}>
-                <h3 className="text-lg font-medium text-foreground mb-4">Books and Study Guides</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <Card>
-                    <CardContent className="p-6">
-                      <div className="flex items-start gap-4">
-                        <div className="flex-shrink-0">
-                          <Image
-                            src="/placeholder.svg?height=100&width=80"
-                            alt="First Aid for USMLE Step 1"
-                            width={80}
-                            height={100}
-                            className="border border-border rounded-md"
-                          />
-                        </div>
-                        <div>
-                          <h4 className="font-medium text-foreground">First Aid for the USMLE Step 1</h4>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            The most comprehensive and widely-used review book for the USMLE Step 1 examination.
-                          </p>
-                          <div className="mt-2">
-                            <Button variant="outline" size="sm">
-                              View Details
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardContent className="p-6">
-                      <div className="flex items-start gap-4">
-                        <div className="flex-shrink-0">
-                          <Image
-                            src="/placeholder.svg?height=100&width=80"
-                            alt="Master the Boards USMLE Step 2 CK"
-                            width={80}
-                            height={100}
-                            className="border border-border rounded-md"
-                          />
-                        </div>
-                        <div>
-                          <h4 className="font-medium text-foreground">Master the Boards USMLE Step 2 CK</h4>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            Targeted review focusing on clinical knowledge and patient management.
-                          </p>
-                          <div className="mt-2">
-                            <Button variant="outline" size="sm">
-                              View Details
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              </motion.div>
-
-              <motion.div variants={itemVariants}>
-                <h3 className="text-lg font-medium text-foreground mb-4 mt-8">Online Question Banks</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>UWorld</CardTitle>
-                      <CardDescription>Gold standard for USMLE preparation</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <ul className="space-y-2">
-                        <li className="flex items-start">
-                          <span className="text-green-600 dark:text-green-400 mr-2">✓</span>
-                          <span className="text-muted-foreground">Comprehensive question bank</span>
-                        </li>
-                        <li className="flex items-start">
-                          <span className="text-green-600 dark:text-green-400 mr-2">✓</span>
-                          <span className="text-muted-foreground">Detailed explanations</span>
-                        </li>
-                        <li className="flex items-start">
-                          <span className="text-green-600 dark:text-green-400 mr-2">✓</span>
-                          <span className="text-muted-foreground">Performance tracking</span>
-                        </li>
-                        <li className="flex items-start">
-                          <span className="text-green-600 dark:text-green-400 mr-2">✓</span>
-                          <span className="text-muted-foreground">Self-assessments</span>
-                        </li>
-                      </ul>
-                    </CardContent>
-                    <CardFooter>
-                      <Button className="w-full">Visit Website</Button>
-                    </CardFooter>
-                  </Card>
-
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Amboss</CardTitle>
-                      <CardDescription>Integrated learning platform</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <ul className="space-y-2">
-                        <li className="flex items-start">
-                          <span className="text-green-600 dark:text-green-400 mr-2">✓</span>
-                          <span className="text-muted-foreground">Question bank</span>
-                        </li>
-                        <li className="flex items-start">
-                          <span className="text-green-600 dark:text-green-400 mr-2">✓</span>
-                          <span className="text-muted-foreground">Medical knowledge library</span>
-                        </li>
-                        <li className="flex items-start">
-                          <span className="text-green-600 dark:text-green-400 mr-2">✓</span>
-                          <span className="text-muted-foreground">Clinical case scenarios</span>
-                        </li>
-                        <li className="flex items-start">
-                          <span className="text-green-600 dark:text-green-400 mr-2">✓</span>
-                          <span className="text-muted-foreground">Customizable study plans</span>
-                        </li>
-                      </ul>
-                    </CardContent>
-                    <CardFooter>
-                      <Button className="w-full">Visit Website</Button>
-                    </CardFooter>
-                  </Card>
-
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Kaplan Qbank</CardTitle>
-                      <CardDescription>Comprehensive test preparation</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <ul className="space-y-2">
-                        <li className="flex items-start">
-                          <span className="text-green-600 dark:text-green-400 mr-2">✓</span>
-                          <span className="text-muted-foreground">Extensive question bank</span>
-                        </li>
-                        <li className="flex items-start">
-                          <span className="text-green-600 dark:text-green-400 mr-2">✓</span>
-                          <span className="text-muted-foreground">Video lectures</span>
-                        </li>
-                        <li className="flex items-start">
-                          <span className="text-green-600 dark:text-green-400 mr-2">✓</span>
-                          <span className="text-muted-foreground">Practice tests</span>
-                        </li>
-                        <li className="flex items-start">
-                          <span className="text-green-600 dark:text-green-400 mr-2">✓</span>
-                          <span className="text-muted-foreground">Mobile app access</span>
-                        </li>
-                      </ul>
-                    </CardContent>
-                    <CardFooter>
-                      <Button className="w-full">Visit Website</Button>
-                    </CardFooter>
-                  </Card>
-                </div>
-              </motion.div>
-            </motion.div>
-          </TabsContent>
-        </Tabs>
+        {filteredDocuments.length === 0 && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-center py-12"
+          >
+            <FolderOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-foreground mb-2">No documents found</h3>
+            <p className="text-muted-foreground">
+              {searchTerm ? "Try adjusting your search terms" : "Upload your first document to get started"}
+            </p>
+          </motion.div>
+        )}
       </div>
     </main>
   )

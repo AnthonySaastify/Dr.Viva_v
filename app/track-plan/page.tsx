@@ -29,20 +29,36 @@ import { format } from "date-fns"
 import { useToast } from "@/components/ui/use-toast"
 import { createTaskAction, updateTaskStatusAction, fetchTasksAction } from "@/app/actions/task-actions"
 import GoogleDriveModal from "@/components/GoogleDriveModal"
-import type { DriveFile } from "../services/googleDriveService"
 import { useRouter } from "next/navigation"
-import { getLoggedInUser, logoutUser } from "@/lib/auth"
+
+interface Task {
+  id: number
+  timestamp: string
+  title: string
+  description: string
+  status: string
+  scheduledDate: string
+}
+
+interface DriveFile {
+  id: string
+  name: string
+  mimeType: string
+  webViewLink?: string
+  webContentLink?: string
+}
+
 
 export default function TrackPlan() {
   const [activeTab, setActiveTab] = useState("progress")
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false)
   const [isSessionModalOpen, setIsSessionModalOpen] = useState(false)
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date())
-  const [sheetTasks, setSheetTasks] = useState([])
+  const [sheetTasks, setSheetTasks] = useState<Task[]>([])
   const [isLoadingTasks, setIsLoadingTasks] = useState(false)
   const [isDriveModalOpen, setIsDriveModalOpen] = useState(false)
   const [driveModalSubject, setDriveModalSubject] = useState<string | null>(null)
-  const [sessionFiles, setSessionFiles] = useState<{ [key: string]: DriveFile }>({})
+  const [sessionFiles, setSessionFiles] = useState<{ [key: string]: any }>({})
   const [selectedSessions, setSelectedSessions] = useState<{ day: string; sessionIndex: number }[]>([])
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false)
 
@@ -184,17 +200,7 @@ export default function TrackPlan() {
     }
   }, [activeTab])
 
-  useEffect(() => {
-    const user = getLoggedInUser()
-    if (!user) {
-      router.replace("/login")
-    }
-  }, [router])
 
-  const handleLogout = () => {
-    logoutUser()
-    router.replace("/login")
-  }
 
   const handleTaskStatusUpdate = async (taskId: number, newStatus: string) => {
     try {
@@ -287,7 +293,7 @@ export default function TrackPlan() {
     setIsDriveModalOpen(true)
   }
 
-  const handleDriveFileSelect = (file: DriveFile) => {
+  const handleDriveFileSelect = (file: any) => {
     if (driveModalSubject) {
       setSessionFiles((prev) => ({ ...prev, [driveModalSubject]: file }))
     }
@@ -359,9 +365,6 @@ export default function TrackPlan() {
 
   return (
     <main className="min-h-screen bg-background pt-16">
-      <div className="flex justify-end p-4">
-        <button onClick={handleLogout} className="px-4 py-2 rounded bg-red-500 text-white hover:bg-red-600 transition">Logout</button>
-      </div>
       <div className="container mx-auto px-4 py-8">
         <div className="mb-6">
           <Link href="/">

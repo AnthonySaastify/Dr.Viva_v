@@ -9,7 +9,7 @@ import { useState, useEffect } from "react"
 import { Badge } from "@/components/ui/badge"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
-import { getLoggedInUser } from "@/lib/auth"
+
 
 // In a real app, this would come from the assessment data
 const mockUserData = {
@@ -23,12 +23,7 @@ export default function Learning() {
   const router = useRouter()
   const [activeTab, setActiveTab] = useState("recommended")
 
-  useEffect(() => {
-    const user = getLoggedInUser()
-    if (!user) {
-      router.replace("/login")
-    }
-  }, [router])
+
 
   return (
     <div className="max-w-4xl mx-auto">
